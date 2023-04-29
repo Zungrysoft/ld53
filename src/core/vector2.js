@@ -125,3 +125,8 @@ export function sat (a, b) {
 
   return [overlap, bestNormal]
 }
+
+export function parseCoords (s) {
+  const spl = s.split(',')
+  return [parseInt(spl[0]) || 0, parseInt(spl[1]) || 0]
+}

@@ -52,7 +52,7 @@ export function magnitude (vector) {
   return Math.sqrt(vector[0] ** 2 + vector[1] ** 2 + vector[2] ** 2)
 }
 
-export function multiply (vector, scalar) {
+export function scale (vector, scalar) {
   return [
     vector[0] * scalar,
     vector[1] * scalar,
@@ -143,7 +143,7 @@ export function getPointOnPlane (r1, rayDir, p1, normal) {
     return null
   }
 
-  return add(r1, multiply(rayDir, Math.abs(dist / dot)))
+  return add(r1, scale(rayDir, Math.abs(dist / dot)))
 }
 
 export function rayTriangleIntersection (r1, rayDir, p1, p2, p3, normal) {
@@ -179,4 +179,9 @@ export function raySphere (ray, sphere, radius) {
   if (dist < radius) {
     return testPoint
   }
+}
+
+export function parseCoords (s) {
+  const spl = s.split(',')
+  return [parseInt(spl[0]) || 0, parseInt(spl[1]) || 0, parseInt(spl[2]) || 0]
 }

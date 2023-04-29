@@ -91,6 +91,7 @@ document.body.style.margin = '0'
 export const ctx = canvas2d.getContext('2d')
 ctx.imageSmoothingEnabled = false
 export const gl = canvas3d.getContext('webgl', { antialias: false })
+export const ext = gl.getExtension("OES_standard_derivatives");
 
 function frame (frameTime) {
   let delta = previousFrameTime === null ? 0 : (frameTime - previousFrameTime) / 1000

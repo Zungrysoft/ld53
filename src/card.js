@@ -212,7 +212,7 @@ class Explosion extends Thing {
   constructor (position, callback = () => {}) {
     super()
     this.position = [...position]
-    this.speed = vec2.angleToVector(u.random(0, Math.PI * 2), u.random(0, 10))
+    this.velocity = vec2.angleToVector(u.random(0, Math.PI * 2), u.random(0, 10))
     const scale = u.random(1, 2)
     this.scale = [scale, scale]
     this.after((1 / this.animations.idle.speed) * 16, () => {
@@ -224,8 +224,8 @@ class Explosion extends Thing {
   update () {
     super.update()
     const friction = 0.95
-    this.speed[0] *= friction
-    this.speed[1] *= friction
+    this.velocity[0] *= friction
+    this.velocity[1] *= friction
   }
 }
 

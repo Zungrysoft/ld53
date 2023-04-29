@@ -2,60 +2,71 @@ import * as game from './core/game.js'
 import * as gfx from './core/webgl.js'
 import Board from './board.js'
 
-game.config.width = 800
-game.config.height = 600
+game.config.width = 1920
+game.config.height = 1080
 //game.config.isWebglEnabled = false
-document.title = 'Super Solitaire'
+document.title = 'Sorting Warehouse'
 
 await game.loadAssets({
   images: {
-    spadeSuit: 'images/spadesuit.png',
-    diamondSuit: 'images/diamondsuit.png',
-    heartSuit: 'images/heartsuit.png',
-    clubSuit: 'images/clubsuit.png',
     background: 'images/bg1.png',
-    explosion: 'images/explosion.png'
+    square: 'images/square.png',
+    uv_crate_a: 'images/uv_crate_a.png',
+    uv_crate_b: 'images/uv_crate_b.png',
+    uv_crate_c: 'images/uv_crate_c.png',
+    uv_crate_d: 'images/uv_crate_d.png',
+    uv_crate_e: 'images/uv_crate_e.png',
+    uv_crate: 'images/uv_crate.png',
+    uv_chute_a: 'images/uv_chute_a.png',
+    uv_chute_b: 'images/uv_chute_b.png',
+    uv_chute_c: 'images/uv_chute_c.png',
+    uv_chute_d: 'images/uv_chute_d.png',
+    uv_chute_e: 'images/uv_chute_e.png',
+    uv_chute: 'images/uv_chute.png',
+    uv_conveyorBelt: 'images/uv_conveyor_belt.png',
+    uv_block: 'images/uv_block.png',
   },
 
-  sounds: {
-    music: 'sounds/JDSherbert - Minigame Music Pack - Digital Waves.mp3',
-    cardHover: 'sounds/cardhover1.wav',
-    cardHover1: 'sounds/cardhover1.wav',
-    cardMove: 'sounds/Spear throw 3.wav',
-    cardMove1: 'sounds/Spear throw 4.wav',
-    cardRotate: 'sounds/Switch sounds 4.wav',
-    cardReveal: 'sounds/Buff 18.wav',
-    cardFoundation1: 'sounds/foundation1.wav',
-    cardFoundation2: 'sounds/foundation2.wav',
-    cardFoundation3: 'sounds/foundation3.wav',
-    cardFoundation4: 'sounds/foundation4.wav'
-  },
+  sounds: {},
 
-  /*
   shaderSources: {
     defaultFrag: 'shaders/default.frag',
-    defaultVert: 'shaders/default.vert'
+    defaultVert: 'shaders/default.vert',
+
+    shadedFrag: 'shaders/shaded.frag',
+    shadedVert: 'shaders/shaded.vert',
   },
 
   models: {
     cube: 'models/cube.obj',
-    cylinder: 'models/cylinder.obj',
+    skybox: 'models/skybox.obj',
+    crate: 'models/crate.obj',
+    chute: 'models/chute.obj',
+    fan: 'models/fan.obj',
+    fanBlade: 'models/fan_blade.obj',
+    conveyor: 'models/conveyor.obj',
+    conveyorBelt: 'models/conveyor_belt.obj',
   }
-  */
 })
 
-/*
+
 const { assets } = game
 assets.shaders = {
   default: gfx.createShader(
     assets.shaderSources.defaultVert,
     assets.shaderSources.defaultFrag
-  )
+  ),
+  shaded: gfx.createShader(
+    assets.shaderSources.shadedVert,
+    assets.shaderSources.shadedFrag
+  ),
 }
 
-assets.textures = {
-  background: gfx.createTexture(assets.images.background)
-}
+assets.textures = Object.fromEntries(
+  Object.entries(assets.images).map(([name, image]) => [
+    name, gfx.createTexture(image)
+  ])
+)
 
 assets.meshes = Object.fromEntries(
   Object.entries(assets.models).map(([name, model]) => [
@@ -63,8 +74,8 @@ assets.meshes = Object.fromEntries(
   ])
 )
 
-console.log(assets)
-*/
+// console.log(assets)
+
 
 game.setScene(() => {
   game.addThing(new Board())

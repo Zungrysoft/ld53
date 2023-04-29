@@ -11,15 +11,15 @@ export default class Popup extends Thing {
   constructor (position, text) {
     super()
     this.position = [...position]
-    this.speed = [0, -5]
+    this.velocity = [0, -5]
     this.text = text
   }
 
   update () {
     super.update()
     const friction = 0.9
-    this.speed[0] *= friction
-    this.speed[1] *= friction
+    this.velocity[0] *= friction
+    this.velocity[1] *= friction
     this.time += 1
     if (this.time > 60) {
       this.dead = true

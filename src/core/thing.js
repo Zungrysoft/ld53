@@ -12,7 +12,7 @@ export default class Thing {
 
   // collision and movement
   position = [0, 0]
-  speed = [0, 0]
+  velocity = [0, 0]
   aabb = [-32, -32, 32, 32]
   contactDirections = { left: false, right: false, up: false, down: false }
   isCollisionEnabled = true // can other things detect my presence
@@ -151,14 +151,14 @@ export default class Thing {
      movement and collision handling
   ********************************************************************************/
 
-  move (dx = this.speed[0], dy = this.speed[1], stepSize = 1) {
+  move (dx = this.velocity[0], dy = this.velocity[1], stepSize = 1) {
     for (const key in this.contactDirections) this.contactDirections[key] = false
     const { sign } = u
 
     while (Math.round(dx * 1000)) {
       const step = sign(dx) * Math.min(Math.abs(dx), stepSize)
       if (this.checkCollision(this.position[0] + step, this.position[1])) {
-        this.speed[0] = 0
+        this.velocity[0] = 0
         this.position[0] = Math.round(this.position[0]) - sign(dx) * this.movementPushback
         if (sign(dx) > 0) this.contactDirections.right = true
         if (sign(dx) < 0) this.contactDirections.left = true
@@ -171,7 +171,7 @@ export default class Thing {
     while (Math.round(dy * 1000)) {
       const step = sign(dy) * Math.min(Math.abs(dy), stepSize)
       if (this.checkCollision(this.position[0], this.position[1] + step)) {
-        this.speed[1] = 0
+        this.velocity[1] = 0
         this.position[1] = Math.round(this.position[1]) - sign(dy) * this.movementPushback
         if (sign(dy) > 0) this.contactDirections.down = true
         if (sign(dy) < 0) this.contactDirections.up = true
