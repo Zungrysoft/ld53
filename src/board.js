@@ -40,37 +40,102 @@ export default class Board extends Thing {
       elements: [
         {
           type: 'crate',
-          position: [0, 0, 0],
+          position: [2, 1, 0],
           letter: 'a',
           angle: 0,
         },
         {
           type: 'crate',
-          position: [0, 0, 1],
-          letter: 'a',
+          position: [0, 3, 0],
+          letter: 'b',
           angle: 0,
         },
         {
-          type: 'block',
-          position: [0, 0, -1],
+          type: 'crate',
+          position: [0, 4, 0],
+          letter: 'c',
+          angle: 0,
         },
         {
-          type: 'fan',
-          position: [0, 1, 0],
-          color: 'red',
+          type: 'conveyor',
+          position: [0, -1, -1],
+          color: 'blue',
           angle: 1,
+        },
+        {
+          type: 'conveyor',
+          position: [1, -1, -1],
+          color: 'blue',
+          angle: 1,
+        },
+        {
+          type: 'conveyor',
+          position: [2, -1, -1],
+          color: 'blue',
+          angle: 1,
+        },
+        {
+          type: 'conveyor',
+          position: [3, -1, -1],
+          color: 'blue',
+          angle: 1,
+        },
+        {
+          type: 'block',
+          position: [4, -1, -1],
+        },
+        {
+          type: 'conveyor',
+          position: [0, 0, -1],
+          color: 'blue',
+          angle: 2,
         },
         {
           type: 'conveyor',
           position: [0, 1, -1],
           color: 'blue',
-          angle: 1,
+          angle: 2,
+        },
+        {
+          type: 'conveyor',
+          position: [0, 2, -1],
+          color: 'blue',
+          angle: 2,
+        },
+        {
+          type: 'conveyor',
+          position: [0, 3, -1],
+          color: 'blue',
+          angle: 2,
+        },
+        {
+          type: 'conveyor',
+          position: [0, 4, -1],
+          color: 'blue',
+          angle: 2,
+        },
+        {
+          type: 'conveyor',
+          position: [1, 1, -1],
+          color: 'blue',
+          angle: 3,
+        },
+        {
+          type: 'conveyor',
+          position: [2, 1, -1],
+          color: 'blue',
+          angle: 3,
+        },
+        {
+          type: 'conveyor',
+          position: [3, 1, -1],
+          color: 'blue',
+          angle: 3,
         },
       ],
     }
 
     this.setupControls()
-    console.log(this.controlMap)
   }
 
 
@@ -117,7 +182,7 @@ export default class Board extends Thing {
     // Game controls
     for (const control in this.controlMap) {
       if (game.keysPressed[this.controlMap[control].keyCode]) {
-        console.log(control)
+        this.advance(control)
       }
     }
   }
@@ -129,6 +194,142 @@ export default class Board extends Thing {
     cam.position[1] = Math.sin(this.viewAngle[0]) * Math.cos(this.viewAngle[1]) * this.viewDistance
     cam.position[2] = Math.sin(this.viewAngle[1]) * this.viewDistance + 1
     cam.lookVector = vec3.anglesToVector(this.viewAngle[0], this.viewAngle[1])
+  }
+
+  moveable(type) {
+    return type === 'crate' || type === 'fan'
+  }
+
+  getElementAt(pos) {
+    for (let i = 0; i < this.state.elements.length; i ++) {
+      if (vec3.equals(this.state.elements[i].position, pos)) {
+        return i
+      }
+    }
+    return -1
+  }
+
+  // Return the new state of the element
+  tryToMoveInto(pos, moveDir, eState, dState) {
+    // Loop over elements
+    for (let i = 0; i < eState.length; i ++) {
+      const es = eState[i]
+      const ds = dState[i]
+
+      // Check if that element is in that space
+      if (vec3.equals(pos, es.position)) {
+        // If the element in that space is blocked, this element is blocked too
+        if (ds.decision === 'blocked') {
+          console.log("Blocked by blocked element " + es.letter)
+          return 'blocked'
+        }
+
+        // If the element in that space is undecided, this element is undecided too
+        if (ds.decision === 'undecided') {
+          return 'undecided'
+        }
+
+        // If the element in that space is moving out of this space, this element is moving if it's in the same direction
+        // If it's moving in a different direction, it is blocked since it would hit the corner
+        if (ds.decision === 'moving') {
+          if (moveDir === ds.moveDirection) {
+            return 'moving'
+          }
+          else {
+            console.log("Blocked by element " + es.letter + " moving out of space in wrong direction")
+            return 'blocked'
+          }
+        }
+      }
+
+      // Check if that element is moving into this space
+      if (ds.decision === 'moving') {
+        const dirs = [[0, 1, 0], [1, 0, 0], [0, -1, 0], [-1, 0, 0]]
+        const moveInto = vec3.add(dirs[ds.moveDirection], es.position)
+        if (vec3.equals(pos, moveInto)) {
+          console.log(es.letter + " was blocked by element moving into space")
+          return 'blocked'
+        }
+      }
+    }
+    return 'moving'
+  }
+
+  advance(color) {
+    // ======================
+    // Conveyor belt movement
+    // ======================
+
+    // Track which elements are blocked and which ones have moved
+    const states = this.state.elements.map(() => {return{
+      decision: 'blocked',
+      moveDirection: -1,
+      movePosition: [0, 0],
+    }})
+
+    // Mark moveable elements as undecided
+    for (const i in this.state.elements) {
+      const element = this.state.elements[i]
+      if (this.moveable(element.type)) {
+        states[i].decision = 'undecided'
+      }
+    }
+
+    // Direction to move vector
+    const dirs = [[0, 1, 0], [1, 0, 0], [0, -1, 0], [-1, 0, 0]]
+
+    // Iterate until all elements have decided how to move
+    while (states.filter(e => e.decision === 'undecided').length > 0) {
+      // Loop over undecided elements
+      for (const i in this.state.elements) {
+        const element = this.state.elements[i]
+        if (states[i].decision === 'undecided') {
+          // Check what this element is sitting on top of
+          const below = this.getElementAt(vec3.add(element.position, [0, 0, -1]))
+          if (below !== -1) {
+            // If on top of a moving conveyor, try to move
+            // TODO: Also make this check for if the element below is moving
+            if (this.state.elements[below].type === 'conveyor' && this.state.elements[below].color === color) {
+              // Set move direction
+              const moveDir = this.state.elements[below].angle || 0
+              states[i].moveDirection = moveDir
+
+              // Get position it wants to move into
+              const moveSpace = vec3.add(element.position, dirs[moveDir])
+              states[i].movePosition = moveSpace
+
+              // Check if the space to move into is (or has been claimed as) occupied
+              states[i].decision = this.tryToMoveInto(moveSpace, moveDir, this.state.elements, states)
+            }
+
+            // If on top of non-moving element, set it as blocked
+            else if (states[below].decision === 'blocked') {
+              console.log(element.letter + " was blocked by sitting on top of non-moving element")
+              states[i].decision = 'blocked'
+              continue
+            }
+
+            // If on top of undecided element, wait for that element to decide
+            else if (states[below].decision === 'undecided') {
+              continue
+            }
+          }
+          else {
+            // Sitting on air. Don't move it until the fall step
+            console.log(this.state.elements[i].letter + " was blocked by sitting on top of air")
+            states[i].decision = 'blocked'
+            continue
+          }
+        }
+      }
+    }
+
+    // Advance state based on decisions
+    for (let i = 0; i < this.state.elements.length; i ++) {
+      if (states[i].decision === 'moving') {
+        this.state.elements[i].position = states[i].movePosition
+      }
+    }
   }
 
   postDraw () {
@@ -200,14 +401,14 @@ export default class Board extends Thing {
     gfx.setTexture(rTexture || assets.textures.square)
     gfx.set('modelMatrix', mat.getTransformation({
       translation: elementState.position,
-      rotation: [Math.PI/2, 0, (elementState.angle || 0) * (Math.PI/2)],
+      rotation: [Math.PI/2, 0, (-elementState.angle || 0) * (Math.PI/2)],
       scale: 1.0
     }))
     gfx.drawMesh(rMesh || assets.meshes.cube)
 
     // If this is a fan, render the blade as well
     if (elementState.type === 'fan') {
-      let offset = vec2.rotate(0, -0.1, (elementState.angle || 0) * (Math.PI/2))
+      let offset = vec2.rotate(0, -0.1, (-elementState.angle || 0) * (Math.PI/2))
       offset.push(0.1)
 
       const spin = this.time / Math.PI
@@ -218,7 +419,7 @@ export default class Board extends Thing {
       gfx.setTexture(rTexture || assets.textures.square)
       gfx.set('modelMatrix', mat.getTransformation({
         translation: vec3.add(elementState.position, offset),
-        rotation: [Math.PI/2, spin, (elementState.angle || 0) * (Math.PI/2)],
+        rotation: [Math.PI/2, spin, (-elementState.angle || 0) * (Math.PI/2)],
         scale: 1.0
       }))
       gfx.drawMesh(assets.meshes.fanBlade)
@@ -226,7 +427,7 @@ export default class Board extends Thing {
 
     // If this is a conveyor, render the belt as well
     if (elementState.type === 'conveyor') {
-      const scroll = (this.time / 60) % 1.0
+      const scroll = -1 * ((this.time / 60) % 1.0)
       gfx.setShader(rShader)
       game.getCamera3D().setUniforms()
       gfx.set('color', [1, 1, 1, 1])
@@ -234,7 +435,7 @@ export default class Board extends Thing {
       gfx.setTexture(assets.textures.uv_conveyorBelt)
       gfx.set('modelMatrix', mat.getTransformation({
         translation: elementState.position,
-        rotation: [Math.PI/2, 0, (elementState.angle || 0) * (Math.PI/2)],
+        rotation: [Math.PI/2, 0, (-elementState.angle || 0) * (Math.PI/2)],
         scale: 1.0
       }))
       gfx.drawMesh(assets.meshes.conveyorBelt)
