@@ -1,0 +1,110 @@
+export const data = {
+    cratesRequired: 3,
+    cratesDelivered: 0,
+    elements: [
+        {
+            type: 'crate',
+            position: [2, 1, 0],
+            letter: 'a',
+            angle: 0,
+        },
+        {
+            type: 'crate',
+            position: [2, 1, 1],
+            letter: 'd',
+            angle: 0,
+        },
+        {
+            type: 'crate',
+            position: [0, 3, 0],
+            letter: 'b',
+            angle: 0,
+        },
+        {
+            type: 'crate',
+            position: [0, 4, 0],
+            letter: 'c',
+            angle: 0,
+        },
+        {
+            type: 'conveyor',
+            position: [0, -1, -1],
+            color: 'blue',
+            angle: 1,
+        },
+        {
+            type: 'conveyor',
+            position: [1, -1, -1],
+            color: 'blue',
+            angle: 1,
+        },
+        {
+            type: 'conveyor',
+            position: [2, -1, -1],
+            color: 'blue',
+            angle: 1,
+        },
+        {
+            type: 'conveyor',
+            position: [3, -1, -1],
+            color: 'blue',
+            angle: 1,
+        },
+        {
+            type: 'block',
+            position: [4, -1, -1],
+        },
+        {
+            type: 'block',
+            position: [3, -1, 1],
+        },
+        {
+            type: 'conveyor',
+            position: [0, 0, -1],
+            color: 'blue',
+            angle: 2,
+        },
+        {
+            type: 'conveyor',
+            position: [0, 1, -1],
+            color: 'blue',
+            angle: 2,
+        },
+        {
+            type: 'conveyor',
+            position: [0, 2, -1],
+            color: 'blue',
+            angle: 2,
+        },
+        {
+            type: 'conveyor',
+            position: [0, 3, -1],
+            color: 'blue',
+            angle: 2,
+        },
+        {
+            type: 'conveyor',
+            position: [0, 4, -1],
+            color: 'blue',
+            angle: 2,
+        },
+        {
+            type: 'conveyor',
+            position: [1, 1, -1],
+            color: 'blue',
+            angle: 3,
+        },
+        {
+            type: 'conveyor',
+            position: [2, 1, -1],
+            color: 'blue',
+            angle: 3,
+        },
+        {
+            type: 'conveyor',
+            position: [3, 1, -1],
+            color: 'blue',
+            angle: 3,
+        },
+    ],
+}

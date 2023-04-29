@@ -9,6 +9,7 @@ import Thing from './core/thing.js'
 import Card from './card.js'
 import Popup from './popup.js'
 import { assets } from './core/game.js'
+import { getLevel } from './levelloader.js'
 
 export default class Board extends Thing {
   state = {}
@@ -34,106 +35,7 @@ export default class Board extends Thing {
   constructor () {
     super()
     game.setThingName(this, 'board')
-    this.state = {
-      cratesRequired: 3,
-      cratesDelivered: 0,
-      elements: [
-        {
-          type: 'crate',
-          position: [2, 1, 0],
-          letter: 'a',
-          angle: 0,
-        },
-        {
-          type: 'crate',
-          position: [0, 3, 0],
-          letter: 'b',
-          angle: 0,
-        },
-        {
-          type: 'crate',
-          position: [0, 4, 0],
-          letter: 'c',
-          angle: 0,
-        },
-        {
-          type: 'conveyor',
-          position: [0, -1, -1],
-          color: 'blue',
-          angle: 1,
-        },
-        {
-          type: 'conveyor',
-          position: [1, -1, -1],
-          color: 'blue',
-          angle: 1,
-        },
-        {
-          type: 'conveyor',
-          position: [2, -1, -1],
-          color: 'blue',
-          angle: 1,
-        },
-        {
-          type: 'conveyor',
-          position: [3, -1, -1],
-          color: 'blue',
-          angle: 1,
-        },
-        {
-          type: 'block',
-          position: [4, -1, -1],
-        },
-        {
-          type: 'conveyor',
-          position: [0, 0, -1],
-          color: 'blue',
-          angle: 2,
-        },
-        {
-          type: 'conveyor',
-          position: [0, 1, -1],
-          color: 'blue',
-          angle: 2,
-        },
-        {
-          type: 'conveyor',
-          position: [0, 2, -1],
-          color: 'blue',
-          angle: 2,
-        },
-        {
-          type: 'conveyor',
-          position: [0, 3, -1],
-          color: 'blue',
-          angle: 2,
-        },
-        {
-          type: 'conveyor',
-          position: [0, 4, -1],
-          color: 'blue',
-          angle: 2,
-        },
-        {
-          type: 'conveyor',
-          position: [1, 1, -1],
-          color: 'blue',
-          angle: 3,
-        },
-        {
-          type: 'conveyor',
-          position: [2, 1, -1],
-          color: 'blue',
-          angle: 3,
-        },
-        {
-          type: 'conveyor',
-          position: [3, 1, -1],
-          color: 'blue',
-          angle: 3,
-        },
-      ],
-    }
+    this.state = getLevel(0)
 
     this.setupControls()
   }
@@ -287,8 +189,7 @@ export default class Board extends Thing {
           // Check what this element is sitting on top of
           const below = this.getElementAt(vec3.add(element.position, [0, 0, -1]))
           if (below !== -1) {
-            // If on top of a moving conveyor, try to move
-            // TODO: Also make this check for if the element below is moving
+            // If on top of an active conveyor
             if (this.state.elements[below].type === 'conveyor' && this.state.elements[below].color === color) {
               // Set move direction
               const moveDir = this.state.elements[below].angle || 0
@@ -302,7 +203,21 @@ export default class Board extends Thing {
               states[i].decision = this.tryToMoveInto(moveSpace, moveDir, this.state.elements, states)
             }
 
-            // If on top of non-moving element, set it as blocked
+            // If on top of a moving element
+            else if (states[below].decision === 'moving') {
+              // Set move direction
+              const moveDir = states[below].moveDirection || 0
+              states[i].moveDirection = moveDir
+
+              // Get position it wants to move into
+              const moveSpace = vec3.add(element.position, dirs[moveDir])
+              states[i].movePosition = moveSpace
+
+              // Check if the space to move into is (or has been claimed as) occupied
+              states[i].decision = this.tryToMoveInto(moveSpace, moveDir, this.state.elements, states)
+            }
+
+            // If on top of blocked element, set it as blocked
             else if (states[below].decision === 'blocked') {
               console.log(element.letter + " was blocked by sitting on top of non-moving element")
               states[i].decision = 'blocked'
