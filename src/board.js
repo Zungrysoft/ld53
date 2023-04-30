@@ -887,8 +887,9 @@ export default class Board extends Thing {
         "R: Restart",
       ].reverse()
       ctx.save()
-      ctx.translate(game.config.width - 400, game.config.height)
+      ctx.translate(game.config.width - 48, game.config.height)
       ctx.font = 'italic 40px Times New Roman'
+      ctx.textAlign = 'right'
       for (const control of auxControls) {
         ctx.translate(0, -48)
         const str = control
