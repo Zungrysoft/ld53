@@ -76,7 +76,7 @@ assets.meshes = Object.fromEntries(
 
 // console.log(assets)
 
-
+game.globals.level = 1
 game.setScene(() => {
   game.addThing(new Board())
 })

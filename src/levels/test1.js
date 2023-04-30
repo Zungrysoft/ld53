@@ -1,5 +1,5 @@
 export const data = {
-    cratesRequired: 3,
+    cratesRequired: 1,
     cratesDelivered: 0,
     cameraDistance: 5,
     cameraPosition: [1, 1, 0],

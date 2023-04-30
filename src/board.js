@@ -42,7 +42,10 @@ export default class Board extends Thing {
     game.setThingName(this, 'board')
 
     // Build board state from level file
-    this.state = getLevel(0)
+    this.state = getLevel(game.globals.level)
+
+    // Consistency
+    this.state.level = game.globals.level
 
     // Set up camera based on level params
     this.setupCamera(this.state)
@@ -83,6 +86,25 @@ export default class Board extends Thing {
     super.update()
 
     this.time ++
+
+    // Level controls
+    if (this.time > 5) {
+      if (game.keysPressed.KeyR) {
+        game.resetScene()
+      }
+      if (game.keysPressed.BracketLeft) {
+        if (game.globals.level > 1) {
+          game.globals.level --
+          game.resetScene()
+        }
+      }
+      if (game.keysPressed.BracketRight) {
+        if (game.globals.level < 2) {
+          game.globals.level ++
+          game.resetScene()
+        }
+      }
+    }
 
     // Camera controls
     if (game.keysPressed.ArrowRight) {
@@ -665,15 +687,61 @@ export default class Board extends Thing {
     ctx.restore()
 
     // Draw the score HUD
-    ctx.save()
-    ctx.translate(32, 72)
-    ctx.font = 'italic 40px Times New Roman'
-    const str = this.state.cratesDelivered + "/" + this.state.cratesRequired + " crates correctly sorted"
-    ctx.fillStyle = 'black'
-    ctx.fillText(str, 0, 0)
-    ctx.fillStyle = 'white'
-    ctx.fillText(str, 4, -4)
-    ctx.restore()
+    {
+      ctx.save()
+      ctx.translate(32, 72)
+      ctx.font = 'italic 40px Times New Roman'
+      const str = this.state.cratesDelivered + "/" + this.state.cratesRequired + " crates correctly sorted"
+      ctx.fillStyle = 'black'
+      ctx.fillText(str, 0, 0)
+      ctx.fillStyle = 'white'
+      ctx.fillText(str, 4, -4)
+      ctx.restore()
+    }
+
+    // Draw the level Name
+    {
+      ctx.save()
+      ctx.translate(game.config.width - 300, 112)
+      ctx.font = 'italic 80px Times New Roman'
+      const str = "Level " + this.state.level
+      ctx.fillStyle = 'black'
+      ctx.fillText(str, 0, 0)
+      ctx.fillStyle = 'white'
+      ctx.fillText(str, 4, -4)
+      ctx.restore()
+    }
+
+    // Draw the victory text
+    if (this.state.cratesDelivered >= this.state.cratesRequired) {
+      // You win message
+      {
+        ctx.save()
+        ctx.translate(game.config.width/2, game.config.height/2 - 100)
+        ctx.font = 'italic 130px Times New Roman'
+        ctx.textAlign = 'center'
+        const str = "Level " + this.state.level + " Complete!"
+        ctx.fillStyle = 'black'
+        ctx.fillText(str, 0, 0)
+        ctx.fillStyle = 'white'
+        ctx.fillText(str, 4, -4)
+        ctx.restore()
+      }
+
+      // Level change guide
+      {
+        ctx.save()
+        ctx.translate(game.config.width/2, game.config.height/2 + 100)
+        ctx.font = 'italic 50px Times New Roman'
+        ctx.textAlign = 'center'
+        const str = "Use the square bracket keys to change levels"
+        ctx.fillStyle = 'black'
+        ctx.fillText(str, 0, 0)
+        ctx.fillStyle = 'white'
+        ctx.fillText(str, 4, -4)
+        ctx.restore()
+      }
+    }
   }
 
   // Draws one game element
