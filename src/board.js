@@ -6,7 +6,6 @@ import * as mat from './core/matrices.js'
 import * as vec2 from './core/vector2.js'
 import * as vec3 from './core/vector3.js'
 import Thing from './core/thing.js'
-import Card from './card.js'
 import Popup from './popup.js'
 import { assets } from './core/game.js'
 import { getLevel } from './levelloader.js'
@@ -136,12 +135,13 @@ export default class Board extends Thing {
         }
         this.state = JSON.parse(newState)
 
+        // Reset all animations
         this.resetAnimations()
+
+        // Clear advancement queue
+        this.advancementData.queue = []
       }
     }
-
-    // Advance animations
-    this.advanceAnimations()
 
     // =============
     // Game controls
@@ -220,6 +220,9 @@ export default class Board extends Thing {
         blocked = this.isAnimationBlocking()
       }
     }
+
+    // Advance animations
+    this.advanceAnimations()
 
   }
 
@@ -854,7 +857,7 @@ export default class Board extends Thing {
     // Texture
     let rTexture = assets.textures['uv_' + elementState.type]
     if (elementState.type === 'crate' || elementState.type === 'chute') {
-      rTexture = assets.textures['uv_' + elementState.type + "_" + elementState.letter]
+      rTexture = assets.textures['uv_' + elementState.type + "_" + (elementState.letter || '')]
     }
 
     // Mesh

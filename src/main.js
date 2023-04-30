@@ -16,7 +16,7 @@ await game.loadAssets({
     uv_crate_c: 'images/uv_crate_c.png',
     uv_crate_d: 'images/uv_crate_d.png',
     uv_crate_e: 'images/uv_crate_e.png',
-    uv_crate: 'images/uv_crate.png',
+    uv_crate_: 'images/uv_crate.png',
     uv_chute_a: 'images/uv_chute_a.png',
     uv_chute_b: 'images/uv_chute_b.png',
     uv_chute_c: 'images/uv_chute_c.png',
