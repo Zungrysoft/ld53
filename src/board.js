@@ -180,11 +180,13 @@ export default class Board extends Thing {
       spinSpeed: 0,
       spinAngle: 0,
       scale: 1.0,
+      scrollTime: 0,
+      scrollPosition: 0,
     }})
   }
 
   advanceAnimations() {
-    const MOVE_LINEAR_SPEED = 0.1
+    const MOVE_LINEAR_SPEED = 0.07
     const GRAVITY = -0.02
     const MOVE_FRICTION_TIME = 15
     const MOVE_FRICTION_FRICTION = 0.005
@@ -255,6 +257,12 @@ export default class Board extends Thing {
       if (anim.spinSpeed > 0) {
         anim.spinSpeed *= 1.0-SPIN_FRICTION
         anim.spinAngle = (anim.spinAngle + anim.spinSpeed) % (Math.PI*2)
+      }
+
+      // Texture scrolling
+      if (anim.scrollTime > 0) {
+        anim.scrollTime -= 1
+        anim.scrollPosition += MOVE_LINEAR_SPEED / 2
       }
     }
   }
@@ -438,6 +446,11 @@ export default class Board extends Thing {
 
         // Move the element's position
         this.state.elements[i].position = [...states[i].movePosition]
+      }
+
+      // Conveyor Belt Scroll Animation
+      if (this.state.elements[i].type === 'conveyor' && this.state.elements[i].color === color) {
+        this.animState[i].scrollTime = 14
       }
     }
   }
@@ -714,7 +727,7 @@ export default class Board extends Thing {
 
     // If this is a conveyor, render the belt as well
     if (elementState.type === 'conveyor') {
-      const scroll = -1 * ((this.time / 60) % 1.0)
+      const scroll = -animState.scrollPosition
       gfx.setShader(rShader)
       game.getCamera3D().setUniforms()
       gfx.set('color', [1, 1, 1, 1])
