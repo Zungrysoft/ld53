@@ -4,7 +4,7 @@ export const data = {
     cameraDistance: 5,
     cameraPosition: [1, 1, 0],
     cameraStartAngle: [Math.PI*(1/2), Math.PI*(1/4)],
-    floorHeight: -10,
+    floorHeight: -5,
     elements: [
         {
             type: 'crate',

@@ -116,7 +116,7 @@ export default class Board extends Thing {
       // If advancement queue is empty, accept user input
       if (this.advancementData.queue.length === 0) {
         for (const control in this.controlMap) {
-          if (game.keysPressed[this.controlMap[control].keyCode]) {
+          if (game.keysDown[this.controlMap[control].keyCode]) {
             this.advancementData = {
               control: control,
               queue: [
@@ -184,12 +184,11 @@ export default class Board extends Thing {
   }
 
   advanceAnimations() {
-    const MOVE_LINEAR_SPEED = 0.2
+    const MOVE_LINEAR_SPEED = 0.1
     const GRAVITY = -0.02
-    const DELIVER_SCALE = 0.3
     const MOVE_FRICTION_TIME = 15
     const MOVE_FRICTION_FRICTION = 0.005
-    const MOVE_FRICTION_THRESHOLD = 0.05
+    const MOVE_FRICTION_THRESHOLD = 0.02
 
     for (let i = 0; i < this.animState.length; i ++) {
       const anim = this.animState[i]
@@ -242,7 +241,7 @@ export default class Board extends Thing {
       if (anim.moveType === 'deliver') {
         // Get smaller the closer we get to our target
         const dist = vec3.magnitude(vec3.subtract(anim.position, anim.endPosition))
-        anim.scale = u.map(dist, 0, 1.0, DELIVER_SCALE, 1.0, true)
+        anim.scale = u.map(dist, 0, 1.0, 0, 1.0, true)
       }
     }
   }
@@ -342,7 +341,7 @@ export default class Board extends Thing {
     const states = this.state.elements.map((e) => {return{
       decision: 'blocked',
       moveDirection: -1,
-      movePosition: e.position
+      movePosition: [...e.position]
     }})
 
     // Mark moveable elements as undecided
@@ -421,11 +420,11 @@ export default class Board extends Thing {
       if (states[i].decision === 'moving') {
         // Animation
         this.animState[i].moveType = 'linear'
-        this.animState[i].position = this.state.elements[i].position
-        this.animState[i].endPosition = states[i].movePosition
+        this.animState[i].position = [...this.state.elements[i].position]
+        this.animState[i].endPosition = [...states[i].movePosition]
 
         // Move the element's position
-        this.state.elements[i].position = states[i].movePosition
+        this.state.elements[i].position = [...states[i].movePosition]
       }
     }
   }
@@ -449,7 +448,7 @@ export default class Board extends Thing {
     if (canPush) {
       // Animation
       this.animState[index].moveType = 'friction'
-      this.animState[index].position = this.state.elements[index].position
+      this.animState[index].position = [...this.state.elements[index].position]
       this.animState[index].endPosition = vec3.add(position, direction)
       this.animState[index].speed = 0
 
@@ -492,7 +491,7 @@ export default class Board extends Thing {
     // Track which elements are blocked and which ones have moved
     const states = this.state.elements.map((e) => {return{
       decision: 'blocked',
-      movePosition: e.position,
+      movePosition: [...e.position],
       fellInChute: false,
     }})
 
@@ -511,7 +510,7 @@ export default class Board extends Thing {
         const element = this.state.elements[i]
         if (states[i].decision === 'undecided') {
           // Check what this element is sitting on top of
-          const below = this.getElementDownward(element.position)
+          const below = this.getElementDownward([...element.position])
           if (below !== -1) {
             // If on top of a chute, destroy self
             if (this.state.elements[below].type === 'chute') {
@@ -548,14 +547,20 @@ export default class Board extends Thing {
       if (states[i].decision === 'moving') {
         // Animation
         this.animState[i].moveType = 'fall'
-        this.animState[i].position = this.state.elements[i].position
-        this.animState[i].endPosition = states[i].movePosition
+        this.animState[i].position = [...this.state.elements[i].position]
+        this.animState[i].endPosition = [...states[i].movePosition]
         this.animState[i].speed = 0
+
+        // If fell into the void, make it disappear
+        if (this.animState[i].endPosition[2] <= this.state.floorHeight && !this.state.elements[i].destroyed) {
+          this.animState[i].moveType = 'deliver'
+          this.state.elements[i].destroyed = true
+        }
 
         // If it fell in a chute, special rules apply
         if (states[i].fellInChute) {
           this.state.elements[i].destroyed = true
-          this.state.elements[i].position = [0, 0, -1000]
+          this.state.elements[i].position = [0, 0, this.state.floorHeight]
           if (this.state.elements[i].letter === states[i].fellInChute) {
             this.state.cratesDelivered ++
           }
@@ -624,6 +629,11 @@ export default class Board extends Thing {
 
   // Draws one game element
   drawElement (elementState, animState) {
+    // Don't render if destroyed
+    if (elementState.destroyed && animState.moveType !== 'deliver') {
+      return
+    }
+
     // Shader
     let rShader = assets.shaders.shaded
 
