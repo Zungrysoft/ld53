@@ -97,30 +97,30 @@ export const data = {
         // Fan
         {
             type: 'block',
-            position: [-1, 4, 0],
+            position: [2, 4, 0],
         },
         {
             type: 'fan',
-            position: [-1, 4, 1],
+            position: [2, 4, 1],
             color: 'green',
-            angle: 1,
+            angle: 3,
         },
 
         // Crates
         {
             type: 'crate',
-            position: [1, 4, 3],
-            letter: 'b',
-        },
-        {
-            type: 'crate',
-            position: [0, 2, 4],
-            letter: 'b',
-        },
-        {
-            type: 'crate',
-            position: [0, 0, 5],
+            position: [0, 4, 3],
             letter: 'a',
+        },
+        {
+            type: 'crate',
+            position: [1, 2, 4],
+            letter: 'a',
+        },
+        {
+            type: 'crate',
+            position: [1, 0, 5],
+            letter: 'b',
         },
     ],
 }

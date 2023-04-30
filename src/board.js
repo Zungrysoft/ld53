@@ -810,7 +810,7 @@ export default class Board extends Thing {
 
     // If this is a fan, render the blade as well
     if (elementState.type === 'fan') {
-      let offset = vec2.rotate(0, -0.1, (-elementState.angle + 2 || 0) * (Math.PI/2))
+      let offset = vec2.rotate(0, -0.1, (-(elementState.angle || 0) + 2) * (Math.PI/2))
       offset.push(0.1)
 
       const spin = animState.spinAngle
@@ -821,7 +821,7 @@ export default class Board extends Thing {
       gfx.setTexture(rTexture || assets.textures.square)
       gfx.set('modelMatrix', mat.getTransformation({
         translation: vec3.add(rPos, offset),
-        rotation: [Math.PI/2, spin, (-elementState.angle + 2 || 0) * (Math.PI/2)],
+        rotation: [Math.PI/2, spin, (-(elementState.angle || 0) + 2) * (Math.PI/2)],
         scale: rScale
       }))
       gfx.drawMesh(assets.meshes.fanBlade)
