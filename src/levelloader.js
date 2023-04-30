@@ -2,13 +2,17 @@ import * as level1 from './levels/test1.js'
 import * as fanIntro from './levels/fanIntro.js'
 import * as fanPushesFan from './levels/fanPushesFan.js'
 import * as stacking from './levels/stacking.js'
+import * as intro from './levels/intro.js'
+import * as shuffle from './levels/shuffle.js'
 
 export function getLevel(lvl) {
   // Retrieve level data
   const levelList = [
+    shuffle,
+    intro,
+    fanIntro,
     stacking,
     fanPushesFan,
-    fanIntro,
     level1,
     level1,
     level1,

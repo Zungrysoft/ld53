@@ -57,7 +57,7 @@ export default class Board extends Thing {
   }
 
   setupCamera(state) {
-    this.viewDistance = state.cameraDistance
+    this.viewDistance = state.cameraDistance + 0.1
     this.viewPosition = state.cameraPosition
     this.viewAngle = state.cameraStartAngle
     this.viewAngleTarget = state.cameraStartAngle
