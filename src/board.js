@@ -13,7 +13,11 @@ import { getLevel } from './levelloader.js'
 
 export default class Board extends Thing {
   state = {}
-  anim = []
+  animState = []
+  advancementData = {
+    control: '',
+    queue: [],
+  }
   stateStack = []
   backgroundScroll = [0, 0]
   backgroundPattern = game.ctx.createPattern(game.assets.images.background, 'repeat')
@@ -36,11 +40,17 @@ export default class Board extends Thing {
   constructor () {
     super()
     game.setThingName(this, 'board')
+
+    // Build board state from level file
     this.state = getLevel(0)
 
     // Set up camera based on level params
     this.setupCamera(this.state)
 
+    // Initial setup of animations
+    this.resetAnimations()
+
+    // Choose controls
     this.setupControls()
   }
 
@@ -91,24 +101,64 @@ export default class Board extends Thing {
     this.viewAngle = vec2.lerp(this.viewAngle, this.viewAngleTarget, 0.2)
     this.updateCamera()
 
-    // Game controls
-    for (const control in this.controlMap) {
-      if (game.keysPressed[this.controlMap[control].keyCode]) {
-        // Conveyor
-        this.advanceConveyor(control)
-        this.advanceFall()
+    // Advance animations
+    this.advanceAnimations()
 
-        // Fan
-        this.advanceFan(control, 0)
-        this.advanceFall()
-        this.advanceFan(control, 1)
-        this.advanceFall()
-        this.advanceFan(control, 2)
-        this.advanceFall()
-        this.advanceFan(control, 3)
-        this.advanceFall()
+    // =============
+    // Game controls
+    // =============
+
+    // Determine if blocked
+    const blocked = this.isAnimationBlocking()
+
+    // If not blocked...
+    if (!blocked) {
+      // If advancement queue is empty, accept user input
+      if (this.advancementData.queue.length === 0) {
+        for (const control in this.controlMap) {
+          if (game.keysPressed[this.controlMap[control].keyCode]) {
+            this.advancementData = {
+              control: control,
+              queue: [
+                'conveyor',
+                'fall',
+                'fan0',
+                'fall',
+                'fan1',
+                'fall',
+                'fan2',
+                'fall',
+                'fan3',
+                'fall',
+              ]
+            }
+          }
+        }
+      }
+      // If there are elements in advancement queue, execute them
+      else {
+        const adv = this.advancementData.queue.shift()
+        if (adv === 'conveyor') {
+          this.advanceConveyor(this.advancementData.control)
+        }
+        else if (adv === 'fall') {
+          this.advanceFall()
+        }
+        else if (adv === 'fan0') {
+          this.advanceFan(this.advancementData.control, 0)
+        }
+        else if (adv === 'fan1') {
+          this.advanceFan(this.advancementData.control, 1)
+        }
+        else if (adv === 'fan2') {
+          this.advanceFan(this.advancementData.control, 2)
+        }
+        else if (adv === 'fan3') {
+          this.advanceFan(this.advancementData.control, 3)
+        }
       }
     }
+
   }
 
   updateCamera() {
@@ -119,6 +169,66 @@ export default class Board extends Thing {
     cam.position[2] = Math.sin(this.viewAngle[1]) * this.viewDistance + 1
     cam.position = vec3.add(cam.position, this.viewPosition)
     cam.lookVector = vec3.anglesToVector(this.viewAngle[0], this.viewAngle[1])
+  }
+
+  resetAnimations() {
+    this.animState = this.state.elements.map((e) => {return{
+      position: [0, 0, 0],
+      endPosition: [0, 0, 0],
+      velocity: [0, 0, 0],
+      moveType: 'none',
+      spinSpeed: 0,
+      spinAngle: 0,
+      scale: 1.0,
+    }})
+  }
+
+  advanceAnimations() {
+    const MOVE_LINEAR_SPEED = 0.2
+    const GRAVITY = -0.02
+    const DELIVER_SCALE = 0.3
+
+    for (let i = 0; i < this.animState.length; i ++) {
+      const anim = this.animState[i]
+
+      // Linear movement (such as from conveyor belts)
+      if (anim.moveType === 'linear') {
+        // If this is already really close, end the animation
+        const delta = vec3.subtract(anim.endPosition, anim.position)
+        if (vec3.magnitude(delta) < MOVE_LINEAR_SPEED) {
+          anim.moveType = 'none'
+        }
+        // Otherwise, move toward it at a constant velocity
+        else {
+          const vel = vec3.scale(vec3.normalize(delta), MOVE_LINEAR_SPEED)
+          anim.position = vec3.add(anim.position, vel)
+        }
+      }
+      if (anim.moveType === 'fall' || anim.moveType === 'deliver') {
+        // Accelerate and move
+        anim.velocity[2] += GRAVITY
+        anim.position = vec3.add(anim.position, anim.velocity)
+
+        // If we've hit the ground, end the animation
+        if (anim.position[2] <= anim.endPosition[2]) {
+          anim.moveType = 'none'
+        }
+      }
+      if (anim.moveType === 'deliver') {
+        // Get smaller the closer we get to our target
+        const dist = vec3.magnitude(vec3.subtract(anim.position, anim.endPosition))
+        anim.scale = u.map(dist, 0, 1.0, DELIVER_SCALE, 1.0, true)
+      }
+    }
+  }
+
+  isAnimationBlocking() {
+    for (const anim of this.animState) {
+      if (anim.moveType != 'none') {
+        return true
+      }
+    }
+    return false
   }
 
   moveable(type) {
@@ -284,6 +394,12 @@ export default class Board extends Thing {
     // Advance state based on decisions
     for (let i = 0; i < this.state.elements.length; i ++) {
       if (states[i].decision === 'moving') {
+        // Animation
+        this.animState[i].moveType = 'linear'
+        this.animState[i].position = this.state.elements[i].position
+        this.animState[i].endPosition = states[i].movePosition
+
+        // Move the element's position
         this.state.elements[i].position = states[i].movePosition
       }
     }
@@ -398,6 +514,12 @@ export default class Board extends Thing {
     // Advance state based on decisions
     for (let i = 0; i < this.state.elements.length; i ++) {
       if (states[i].decision === 'moving') {
+        // Animation
+        this.animState[i].moveType = 'fall'
+        this.animState[i].position = this.state.elements[i].position
+        this.animState[i].endPosition = states[i].movePosition
+        this.animState[i].velocity = [0, 0, 0]
+
         // If it fell in a chute, special rules apply
         if (states[i].fellInChute) {
           this.state.elements[i].destroyed = true
@@ -405,6 +527,8 @@ export default class Board extends Thing {
           if (this.state.elements[i].letter === states[i].fellInChute) {
             this.state.cratesDelivered ++
           }
+
+          this.animState[i].moveType = 'deliver'
         }
         // Otherwise, just move it where it's headed
         else {
@@ -431,8 +555,8 @@ export default class Board extends Thing {
   draw () {
     const { ctx } = game
     // Draw each of the game elements
-    for (const element of this.state.elements) {
-      this.drawElement(element)
+    for (let i = 0; i < this.state.elements.length; i ++) {
+      this.drawElement(this.state.elements[i], this.animState[i])
     }
 
     // Draw the control HUD
@@ -467,7 +591,7 @@ export default class Board extends Thing {
   }
 
   // Draws one game element
-  drawElement (elementState) {
+  drawElement (elementState, animState) {
     // Shader
     let rShader = assets.shaders.shaded
 
@@ -486,6 +610,18 @@ export default class Board extends Thing {
     // Mesh
     let rMesh = assets.meshes[elementState.type]
 
+    // Position
+    let rPos = elementState.position
+    if (animState.moveType !== 'none') {
+      rPos = animState.position
+    }
+
+    // Scale
+    let rScale = 1.0
+    if (animState.moveType !== 'none') {
+      rScale = animState.scale
+    }
+
     // Perform the draw operations
     gfx.setShader(rShader)
     game.getCamera3D().setUniforms()
@@ -493,9 +629,9 @@ export default class Board extends Thing {
     gfx.set('scroll', 0)
     gfx.setTexture(rTexture || assets.textures.square)
     gfx.set('modelMatrix', mat.getTransformation({
-      translation: elementState.position,
+      translation: rPos,
       rotation: [Math.PI/2, 0, (-elementState.angle || 0) * (Math.PI/2)],
-      scale: 1.0
+      scale: rScale
     }))
     gfx.drawMesh(rMesh || assets.meshes.cube)
 
@@ -511,9 +647,9 @@ export default class Board extends Thing {
       gfx.set('scroll', 0)
       gfx.setTexture(rTexture || assets.textures.square)
       gfx.set('modelMatrix', mat.getTransformation({
-        translation: vec3.add(elementState.position, offset),
+        translation: vec3.add(rPos, offset),
         rotation: [Math.PI/2, spin, (-elementState.angle + 2 || 0) * (Math.PI/2)],
-        scale: 1.0
+        scale: rScale
       }))
       gfx.drawMesh(assets.meshes.fanBlade)
     }
@@ -527,9 +663,9 @@ export default class Board extends Thing {
       gfx.set('scroll', scroll)
       gfx.setTexture(assets.textures.uv_conveyorBelt)
       gfx.set('modelMatrix', mat.getTransformation({
-        translation: elementState.position,
+        translation: rPos,
         rotation: [Math.PI/2, 0, (-elementState.angle || 0) * (Math.PI/2)],
-        scale: 1.0
+        scale: rScale
       }))
       gfx.drawMesh(assets.meshes.conveyorBelt)
     }
