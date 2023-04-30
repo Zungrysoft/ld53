@@ -137,16 +137,19 @@ export const data = {
             type: 'chute',
             position: [0, -3, 0],
             letter: 'a',
+            angle: 2,
         },
         {
             type: 'chute',
             position: [1, -3, 0],
             letter: 'b',
+            angle: 2,
         },
         {
             type: 'chute',
             position: [2, -3, 0],
             letter: 'a',
+            angle: 2,
         },
 
         // Fans

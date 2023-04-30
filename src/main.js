@@ -87,7 +87,7 @@ assets.meshes = Object.fromEntries(
 
 // console.log(assets)
 
-game.globals.levelCount = 11
+game.globals.levelCount = 12
 game.globals.levelCompletions = []
 
 for (let i = 0; i < game.globals.levelCount; i++) {

@@ -11,6 +11,7 @@ import * as zapYourProblems from './levels/zapYourProblems.js'
 import * as fantastic from './levels/fantastic.js'
 import * as laserIntro from './levels/laserIntro.js'
 import * as simpleFans from './levels/simpleFans.js'
+import * as twoTowers from './levels/twoTowers.js'
 
 export function getLevel(lvl) {
   // Retrieve level data
@@ -20,10 +21,11 @@ export function getLevel(lvl) {
     stacking,
     fanPushesFan,
     simpleFans,
-    sorting,
     shuffle,
+    sorting,
     laserIntro,
     fantastic,
+    twoTowers,
     plinko,
     zapYourProblems,
     level1,
