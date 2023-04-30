@@ -1,6 +1,10 @@
 export const data = {
     cratesRequired: 3,
     cratesDelivered: 0,
+    cameraDistance: 4,
+    cameraPosition: [1, 1, 0],
+    cameraStartAngle: [Math.PI*(1/2), Math.PI*(1/4)],
+    floorHeight: -10,
     elements: [
         {
             type: 'crate',
@@ -12,6 +16,12 @@ export const data = {
             type: 'crate',
             position: [2, 1, 1],
             letter: 'd',
+            angle: 0,
+        },
+        {
+            type: 'crate',
+            position: [2, 1, 2],
+            letter: 'e',
             angle: 0,
         },
         {
@@ -105,6 +115,16 @@ export const data = {
             position: [3, 1, -1],
             color: 'blue',
             angle: 3,
+        },
+        {
+            type: 'block',
+            position: [-3, 1, -1],
+        },
+        {
+            type: 'fan',
+            position: [-3, 1, 0],
+            angle: 1,
+            color: 'yellow',
         },
     ],
 }

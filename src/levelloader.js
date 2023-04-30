@@ -1,7 +1,9 @@
 import * as level1 from './levels/test1.js'
 
 export function getLevel(lvl) {
+  // Retrieve level data
   const levelList = [level1]
-  return levelList[lvl].data
+  const ret = levelList[lvl].data
+  return ret
 }
 

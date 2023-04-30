@@ -20,6 +20,7 @@ export default class Board extends Thing {
   viewAngle = [Math.PI/2, Math.PI*(1/4)]
   viewAngleTarget = this.viewAngle
   viewDistance = 4
+  viewPosition = [0, 0, 0]
   time = 0
   colorMap = {
     'red': [0.3, 0.0, 0.0, 1],
@@ -37,9 +38,18 @@ export default class Board extends Thing {
     game.setThingName(this, 'board')
     this.state = getLevel(0)
 
+    // Set up camera based on level params
+    this.setupCamera(this.state)
+
     this.setupControls()
   }
 
+  setupCamera(state) {
+    this.viewDistance = state.cameraDistance
+    this.viewPosition = state.cameraPosition
+    this.viewAngle = state.cameraStartAngle
+    this.viewAngleTarget = state.cameraStartAngle
+  }
 
   setupControls() {
     let controlOrder = [
@@ -84,7 +94,19 @@ export default class Board extends Thing {
     // Game controls
     for (const control in this.controlMap) {
       if (game.keysPressed[this.controlMap[control].keyCode]) {
-        this.advance(control)
+        // Conveyor
+        this.advanceConveyor(control)
+        this.advanceFall(control)
+
+        // Fan
+        this.advanceFan(control, 0)
+        this.advanceFall(control)
+        this.advanceFan(control, 1)
+        this.advanceFall(control)
+        this.advanceFan(control, 2)
+        this.advanceFall(control)
+        this.advanceFan(control, 3)
+        this.advanceFall(control)
       }
     }
   }
@@ -95,10 +117,15 @@ export default class Board extends Thing {
     cam.position[0] = Math.cos(this.viewAngle[0]) * Math.cos(this.viewAngle[1]) * this.viewDistance
     cam.position[1] = Math.sin(this.viewAngle[0]) * Math.cos(this.viewAngle[1]) * this.viewDistance
     cam.position[2] = Math.sin(this.viewAngle[1]) * this.viewDistance + 1
+    cam.position = vec3.add(cam.position, this.viewPosition)
     cam.lookVector = vec3.anglesToVector(this.viewAngle[0], this.viewAngle[1])
   }
 
   moveable(type) {
+    return type === 'crate' || type === 'fan'
+  }
+
+  pushable(type) {
     return type === 'crate' || type === 'fan'
   }
 
@@ -108,6 +135,26 @@ export default class Board extends Thing {
         return i
       }
     }
+    return -1
+  }
+
+  getElementDownward(position) {
+    // Loop over positions below crate
+    let pos = [...position]
+    while (pos[2] > this.state.floorHeight) {
+      pos[2] --
+
+      // Loop over elements that could be there
+      const index = this.getElementAt(pos)
+      if (index >= 0) {
+        const elem = this.state.elements[index]
+        if (vec3.equals(elem.position, pos)) {
+          return index
+        }
+      }
+    }
+
+    // Didn't find anything, return -1 for falling into the void
     return -1
   }
 
@@ -146,9 +193,7 @@ export default class Board extends Thing {
 
       // Check if that element is moving into this space
       if (ds.decision === 'moving') {
-        const dirs = [[0, 1, 0], [1, 0, 0], [0, -1, 0], [-1, 0, 0]]
-        const moveInto = vec3.add(dirs[ds.moveDirection], es.position)
-        if (vec3.equals(pos, moveInto)) {
+        if (vec3.equals(pos, ds.movePosition)) {
           console.log(es.letter + " was blocked by element moving into space")
           return 'blocked'
         }
@@ -157,16 +202,12 @@ export default class Board extends Thing {
     return 'moving'
   }
 
-  advance(color) {
-    // ======================
-    // Conveyor belt movement
-    // ======================
-
+  advanceConveyor(color) {
     // Track which elements are blocked and which ones have moved
-    const states = this.state.elements.map(() => {return{
+    const states = this.state.elements.map((e) => {return{
       decision: 'blocked',
       moveDirection: -1,
-      movePosition: [0, 0],
+      movePosition: e.position
     }})
 
     // Mark moveable elements as undecided
@@ -198,6 +239,7 @@ export default class Board extends Thing {
               // Get position it wants to move into
               const moveSpace = vec3.add(element.position, dirs[moveDir])
               states[i].movePosition = moveSpace
+              console.log(element.letter + " is moving into " + moveSpace)
 
               // Check if the space to move into is (or has been claimed as) occupied
               states[i].decision = this.tryToMoveInto(moveSpace, moveDir, this.state.elements, states)
@@ -233,6 +275,112 @@ export default class Board extends Thing {
             // Sitting on air. Don't move it until the fall step
             console.log(this.state.elements[i].letter + " was blocked by sitting on top of air")
             states[i].decision = 'blocked'
+            continue
+          }
+        }
+      }
+    }
+
+    // Advance state based on decisions
+    for (let i = 0; i < this.state.elements.length; i ++) {
+      if (states[i].decision === 'moving') {
+        this.state.elements[i].position = states[i].movePosition
+      }
+    }
+  }
+
+  fanPushElement(position, direction) {
+    const index = this.getElementAt(position)
+
+    // Base case: this is air
+    if (index === -1) {
+      return true
+    }
+    // Base case: element is not pushable
+    if (!this.pushable(this.state.elements[index].type)) {
+      return false
+    }
+
+    // Recursion case: Check the next element behind
+    const canPush = this.fanPushElement(vec3.add(position, direction), direction)
+
+    // If the result is that we can push this element, do it
+    if (canPush) {
+      this.state.elements[index].position = vec3.add(position, direction)
+    }
+
+    // Return result to previous element
+    return canPush
+  }
+
+  advanceFan(color, angle) {
+    // To simplify logic, we do each fan direction separately
+
+    // Direction to move vector
+    const dirs = [[0, 1, 0], [1, 0, 0], [0, -1, 0], [-1, 0, 0]]
+
+    // Iterate over fans...
+    for (const i in this.state.elements) {
+      const element = this.state.elements[i]
+      // If this is a fan of the right color and angle...
+      if (element.type === 'fan' && element.angle === angle && element.color === color) {
+        // Find elements in this fan's line
+        let pos = [...element.position]
+        while (vec2.magnitude(pos) < 50) {
+          pos = vec3.add(pos, dirs[angle])
+          const index = this.getElementAt(pos)
+
+          // If this is a moveable element, try to push it
+          if (index !== -1) {
+            this.fanPushElement(pos, dirs[angle])
+            break
+          }
+        }
+      }
+    }
+  }
+
+  advanceFall(color) {
+    // Track which elements are blocked and which ones have moved
+    const states = this.state.elements.map((e) => {return{
+      decision: 'blocked',
+      movePosition: e.position,
+    }})
+
+    // Mark moveable elements as undecided
+    for (const i in this.state.elements) {
+      const element = this.state.elements[i]
+      if (this.moveable(element.type)) {
+        states[i].decision = 'undecided'
+      }
+    }
+
+    // Iterate until all elements have decided how to move
+    while (states.filter(e => e.decision === 'undecided').length > 0) {
+      // Loop over undecided elements
+      for (const i in this.state.elements) {
+        const element = this.state.elements[i]
+        if (states[i].decision === 'undecided') {
+          // Check what this element is sitting on top of
+          const below = this.getElementDownward(element.position)
+          if (below !== -1) {
+            // If on top of a decided element, move down to it
+            if (states[below].decision === 'blocked' || states[below].decision === 'moving') {
+              states[i].decision = 'moving'
+              states[i].movePosition = vec3.add(states[below].movePosition, [0, 0, 1])
+              continue
+            }
+
+            // If on top of undecided element, wait for that element to decide
+            else if (states[below].decision === 'undecided') {
+              continue
+            }
+          }
+          else {
+            // Sitting on the void. Fall into it.
+            console.log(element.letter + " fell into the void")
+            states[i].decision = 'moving'
+            states[i].movePosition[2] = this.state.floorHeight
             continue
           }
         }
@@ -323,7 +471,7 @@ export default class Board extends Thing {
 
     // If this is a fan, render the blade as well
     if (elementState.type === 'fan') {
-      let offset = vec2.rotate(0, -0.1, (-elementState.angle || 0) * (Math.PI/2))
+      let offset = vec2.rotate(0, -0.1, (-elementState.angle + 2 || 0) * (Math.PI/2))
       offset.push(0.1)
 
       const spin = this.time / Math.PI
@@ -334,7 +482,7 @@ export default class Board extends Thing {
       gfx.setTexture(rTexture || assets.textures.square)
       gfx.set('modelMatrix', mat.getTransformation({
         translation: vec3.add(elementState.position, offset),
-        rotation: [Math.PI/2, spin, (-elementState.angle || 0) * (Math.PI/2)],
+        rotation: [Math.PI/2, spin, (-elementState.angle + 2 || 0) * (Math.PI/2)],
         scale: 1.0
       }))
       gfx.drawMesh(assets.meshes.fanBlade)
