@@ -18,7 +18,7 @@ void main() {
   if (diffuse.a == 0.0) { discard; }
 
   // Apply basic shading
-  vec4 shaded = vec4(diffuse.rgb * max(origNormal.z, mix(0.25, 1.0, origNormal.x/2.0 + 0.5)), diffuse.a);
+  vec4 shaded = vec4(diffuse.rgb * max(origNormal.z, mix(0.35, 1.0, origNormal.x/2.0 + 0.5)), diffuse.a);
 
   gl_FragColor = shaded;
 }

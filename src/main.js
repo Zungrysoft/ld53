@@ -25,6 +25,7 @@ await game.loadAssets({
     uv_chute: 'images/uv_chute.png',
     uv_conveyorBelt: 'images/uv_conveyor_belt.png',
     uv_block: 'images/uv_block.png',
+    uv_laser: 'images/uv_laser.png',
   },
 
   sounds: {},

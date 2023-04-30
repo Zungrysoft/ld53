@@ -27,7 +27,7 @@ export default class Board extends Thing {
   viewPosition = [0, 0, 0]
   time = 0
   colorMap = {
-    'red': [0.3, 0.0, 0.0, 1],
+    'red': [0.5, 0.0, 0.0, 1],
     'green': [0.0, 0.6, 0.0, 1],
     'blue': [0.0, 0.0, 0.4, 1],
     'cyan': [0.0, 0.8, 0.8, 1],
