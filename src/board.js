@@ -101,6 +101,15 @@ export default class Board extends Thing {
     this.viewAngle = vec2.lerp(this.viewAngle, this.viewAngleTarget, 0.2)
     this.updateCamera()
 
+    // Undo function
+    if (game.keysPressed.KeyU || game.keysPressed.Space) {
+      // Make sure there are actually things to undo
+      if (this.stateStack.length > 0) {
+        this.state = JSON.parse(this.stateStack.pop())
+        this.resetAnimations()
+      }
+    }
+
     // Advance animations
     this.advanceAnimations()
 
@@ -116,7 +125,9 @@ export default class Board extends Thing {
       // If advancement queue is empty, accept user input
       if (this.advancementData.queue.length === 0) {
         for (const control in this.controlMap) {
+          // If the user pressed a control key...
           if (game.keysDown[this.controlMap[control].keyCode]) {
+            // Create action queue
             this.advancementData = {
               control: control,
               queue: [
@@ -132,6 +143,15 @@ export default class Board extends Thing {
                 'fall',
               ]
             }
+
+            // Push current state to undo stack (but only if it's different from the previous state)
+            const curState = JSON.stringify(this.state)
+            if (this.stateStack[this.stateStack.length-1] !== curState) {
+              this.stateStack.push(curState)
+            }
+
+            // Done looking for controls
+            break
           }
         }
       }
