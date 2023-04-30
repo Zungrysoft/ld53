@@ -8,17 +8,18 @@ import * as sorting from './levels/sorting.js'
 import * as limitedResources from './levels/limitedResources.js'
 import * as plinko from './levels/plinko.js'
 import * as zapYourProblems from './levels/zapYourProblems.js'
+import * as fantastic from './levels/fantastic.js'
 
 export function getLevel(lvl) {
   // Retrieve level data
   const levelList = [
-    limitedResources,
     intro,
     fanIntro,
     stacking,
     fanPushesFan,
     sorting,
     shuffle,
+    fantastic,
     plinko,
     zapYourProblems,
     level1,
