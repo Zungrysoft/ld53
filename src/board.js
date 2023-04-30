@@ -169,7 +169,7 @@ export default class Board extends Thing {
       if (vec3.equals(pos, es.position)) {
         // If the element in that space is blocked, this element is blocked too
         if (ds.decision === 'blocked') {
-          console.log("Blocked by blocked element " + es.letter)
+          // console.log("Blocked by blocked element " + es.letter)
           return 'blocked'
         }
 
@@ -185,7 +185,7 @@ export default class Board extends Thing {
             return 'moving'
           }
           else {
-            console.log("Blocked by element " + es.letter + " moving out of space in wrong direction")
+            // console.log("Blocked by element " + es.letter + " moving out of space in wrong direction")
             return 'blocked'
           }
         }
@@ -194,7 +194,7 @@ export default class Board extends Thing {
       // Check if that element is moving into this space
       if (ds.decision === 'moving') {
         if (vec3.equals(pos, ds.movePosition)) {
-          console.log(es.letter + " was blocked by element moving into space")
+          // console.log(es.letter + " was blocked by element moving into space")
           return 'blocked'
         }
       }
@@ -239,7 +239,7 @@ export default class Board extends Thing {
               // Get position it wants to move into
               const moveSpace = vec3.add(element.position, dirs[moveDir])
               states[i].movePosition = moveSpace
-              console.log(element.letter + " is moving into " + moveSpace)
+              // console.log(element.letter + " is moving into " + moveSpace)
 
               // Check if the space to move into is (or has been claimed as) occupied
               states[i].decision = this.tryToMoveInto(moveSpace, moveDir, this.state.elements, states)
@@ -261,7 +261,7 @@ export default class Board extends Thing {
 
             // If on top of blocked element, set it as blocked
             else if (states[below].decision === 'blocked') {
-              console.log(element.letter + " was blocked by sitting on top of non-moving element")
+              // console.log(element.letter + " was blocked by sitting on top of non-moving element")
               states[i].decision = 'blocked'
               continue
             }
@@ -273,7 +273,7 @@ export default class Board extends Thing {
           }
           else {
             // Sitting on air. Don't move it until the fall step
-            console.log(this.state.elements[i].letter + " was blocked by sitting on top of air")
+            // console.log(this.state.elements[i].letter + " was blocked by sitting on top of air")
             states[i].decision = 'blocked'
             continue
           }
@@ -378,7 +378,7 @@ export default class Board extends Thing {
           }
           else {
             // Sitting on the void. Fall into it.
-            console.log(element.letter + " fell into the void")
+            // console.log(element.letter + " fell into the void")
             states[i].decision = 'moving'
             states[i].movePosition[2] = this.state.floorHeight
             continue

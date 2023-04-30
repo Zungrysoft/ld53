@@ -118,13 +118,17 @@ export const data = {
         },
         {
             type: 'block',
-            position: [-3, 1, -1],
+            position: [-3, 1, 0],
         },
         {
             type: 'fan',
-            position: [-3, 1, 0],
+            position: [-3, 1, 1],
             angle: 1,
             color: 'yellow',
+        },
+        {
+            type: 'block',
+            position: [4, 1, 0],
         },
     ],
 }
