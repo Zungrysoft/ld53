@@ -6,7 +6,6 @@ import * as mat from './core/matrices.js'
 import * as vec2 from './core/vector2.js'
 import * as vec3 from './core/vector3.js'
 import Thing from './core/thing.js'
-import Popup from './popup.js'
 import { assets } from './core/game.js'
 import { getLevel } from './levelloader.js'
 
@@ -909,7 +908,7 @@ export default class Board extends Thing {
       }
 
       // Level change guide
-      {
+      if (this.state.level !== 0) {
         ctx.save()
         ctx.translate(game.config.width/2, game.config.height/2 + 100)
         ctx.font = 'italic 50px Times New Roman'
