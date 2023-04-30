@@ -189,6 +189,7 @@ export default class Board extends Thing {
     const MOVE_FRICTION_TIME = 15
     const MOVE_FRICTION_FRICTION = 0.005
     const MOVE_FRICTION_THRESHOLD = 0.02
+    const SPIN_FRICTION = 0.04
 
     for (let i = 0; i < this.animState.length; i ++) {
       const anim = this.animState[i]
@@ -206,6 +207,8 @@ export default class Board extends Thing {
           anim.position = vec3.add(anim.position, vel)
         }
       }
+
+      // Friction movement (such as from fans)
       if (anim.moveType === 'friction') {
         // Find distance between start and end
         const delta = vec3.subtract(anim.endPosition, anim.position)
@@ -228,6 +231,8 @@ export default class Board extends Thing {
           anim.position = vec3.add(anim.position, vel)
         }
       }
+
+      // Falling movement
       if (anim.moveType === 'fall' || anim.moveType === 'deliver') {
         // Accelerate and move
         anim.speed += GRAVITY
@@ -238,10 +243,18 @@ export default class Board extends Thing {
           anim.moveType = 'none'
         }
       }
+
+      // Shrinking when falling into a chute
       if (anim.moveType === 'deliver') {
         // Get smaller the closer we get to our target
         const dist = vec3.magnitude(vec3.subtract(anim.position, anim.endPosition))
         anim.scale = u.map(dist, 0, 1.0, 0, 1.0, true)
+      }
+
+      // Fan spinning
+      if (anim.spinSpeed > 0) {
+        anim.spinSpeed *= 1.0-SPIN_FRICTION
+        anim.spinAngle = (anim.spinAngle + anim.spinSpeed) % (Math.PI*2)
       }
     }
   }
@@ -483,6 +496,9 @@ export default class Board extends Thing {
             break
           }
         }
+
+        // Fan spinning animation
+        this.animState[i].spinSpeed = 0.6
       }
     }
   }
@@ -682,7 +698,7 @@ export default class Board extends Thing {
       let offset = vec2.rotate(0, -0.1, (-elementState.angle + 2 || 0) * (Math.PI/2))
       offset.push(0.1)
 
-      const spin = this.time / Math.PI
+      const spin = animState.spinAngle
       gfx.setShader(rShader)
       game.getCamera3D().setUniforms()
       gfx.set('color', this.colorMap[elementState.color])
