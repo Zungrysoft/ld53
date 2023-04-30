@@ -16,7 +16,7 @@ export default class Board extends Thing {
   animState = []
   advancementData = {
     control: '',
-    queue: [],
+    queue: ['fall'],
   }
   stateStack = []
   backgroundScroll = [0, 0]
@@ -33,7 +33,6 @@ export default class Board extends Thing {
     'cyan': [0.0, 0.8, 0.8, 1],
     'yellow': [0.9, 0.9, 0.0, 1],
     'black': [0.0, 0.0, 0.0, 1],
-    'pink': [1.0, 0.8, 0.8, 1],
   }
   controlMap = {}
 
@@ -99,7 +98,7 @@ export default class Board extends Thing {
         }
       }
       if (game.keysPressed.BracketRight) {
-        if (game.globals.level < 2) {
+        if (game.globals.level < 13) {
           game.globals.level ++
           game.resetScene()
         }
@@ -603,6 +602,9 @@ export default class Board extends Thing {
             else if (states[below].decision === 'blocked' || states[below].decision === 'moving') {
               states[i].decision = 'moving'
               states[i].movePosition = vec3.add(states[below].movePosition, [0, 0, 1])
+              if (states[below].movePosition[2] <= this.state.floorHeight) {
+                states[i].movePosition[2] = this.state.floorHeight
+              }
               continue
             }
 

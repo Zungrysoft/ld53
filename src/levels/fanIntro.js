@@ -4,7 +4,7 @@ export const data = {
     cameraDistance: 5,
     cameraPosition: [0.5, 3.5, 0],
     cameraStartAngle: [Math.PI*(2/4), Math.PI*(1/8)],
-    floorHeight: -5,
+    floorHeight: -3,
     elements: [
         // Left Row
         {
@@ -109,17 +109,17 @@ export const data = {
         // Crates
         {
             type: 'crate',
-            position: [1, 4, 1],
+            position: [1, 4, 3],
             letter: 'b',
         },
         {
             type: 'crate',
-            position: [0, 2, 1],
+            position: [0, 2, 4],
             letter: 'b',
         },
         {
             type: 'crate',
-            position: [0, 0, 1],
+            position: [0, 0, 5],
             letter: 'a',
         },
     ],
