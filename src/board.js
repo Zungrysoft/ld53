@@ -175,7 +175,7 @@ export default class Board extends Thing {
     this.animState = this.state.elements.map((e) => {return{
       position: [0, 0, 0],
       endPosition: [0, 0, 0],
-      velocity: [0, 0, 0],
+      speed: 0,
       moveType: 'none',
       spinSpeed: 0,
       spinAngle: 0,
@@ -187,6 +187,9 @@ export default class Board extends Thing {
     const MOVE_LINEAR_SPEED = 0.2
     const GRAVITY = -0.02
     const DELIVER_SCALE = 0.3
+    const MOVE_FRICTION_TIME = 15
+    const MOVE_FRICTION_FRICTION = 0.005
+    const MOVE_FRICTION_THRESHOLD = 0.05
 
     for (let i = 0; i < this.animState.length; i ++) {
       const anim = this.animState[i]
@@ -204,10 +207,32 @@ export default class Board extends Thing {
           anim.position = vec3.add(anim.position, vel)
         }
       }
+      if (anim.moveType === 'friction') {
+        // Find distance between start and end
+        const delta = vec3.subtract(anim.endPosition, anim.position)
+
+        // If velocity is at zero, we've just started. So set initial values.
+        // Initial speed is calculated such that the animation will complete in MOVE_FRICTION_TIME frames
+        if (anim.speed === 0) {
+          anim.speed = (vec3.magnitude(delta) - (0.5 * (-MOVE_FRICTION_FRICTION) * Math.pow(MOVE_FRICTION_TIME, 2))) / MOVE_FRICTION_TIME
+        }
+
+        // If this is already really close, end the animation
+        if (vec3.magnitude(delta) < MOVE_FRICTION_THRESHOLD) {
+          anim.moveType = 'none'
+        }
+
+        // Otherwise, move toward it
+        else {
+          anim.speed -= MOVE_FRICTION_FRICTION
+          const vel = vec3.scale(vec3.normalize(delta), anim.speed)
+          anim.position = vec3.add(anim.position, vel)
+        }
+      }
       if (anim.moveType === 'fall' || anim.moveType === 'deliver') {
         // Accelerate and move
-        anim.velocity[2] += GRAVITY
-        anim.position = vec3.add(anim.position, anim.velocity)
+        anim.speed += GRAVITY
+        anim.position[2] += anim.speed
 
         // If we've hit the ground, end the animation
         if (anim.position[2] <= anim.endPosition[2]) {
@@ -422,6 +447,13 @@ export default class Board extends Thing {
 
     // If the result is that we can push this element, do it
     if (canPush) {
+      // Animation
+      this.animState[index].moveType = 'friction'
+      this.animState[index].position = this.state.elements[index].position
+      this.animState[index].endPosition = vec3.add(position, direction)
+      this.animState[index].speed = 0
+
+      // Move
       this.state.elements[index].position = vec3.add(position, direction)
     }
 
@@ -518,7 +550,7 @@ export default class Board extends Thing {
         this.animState[i].moveType = 'fall'
         this.animState[i].position = this.state.elements[i].position
         this.animState[i].endPosition = states[i].movePosition
-        this.animState[i].velocity = [0, 0, 0]
+        this.animState[i].speed = 0
 
         // If it fell in a chute, special rules apply
         if (states[i].fellInChute) {
