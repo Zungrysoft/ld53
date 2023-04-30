@@ -156,7 +156,7 @@ export default class Board extends Thing {
     this.updateCamera()
 
     // Undo function
-    if (game.keysPressed.KeyU || game.keysPressed.Space) {
+    if (game.keysPressed.KeyU || game.keysPressed.Space || game.keysPressed.Backspace) {
       // Make sure there are actually things to undo
       if (this.stateStack.length > 0) {
         let newState = this.stateStack.pop()
@@ -860,23 +860,45 @@ export default class Board extends Thing {
     }
 
     // Draw the control HUD
-    ctx.save()
-    ctx.translate(32, game.config.height)
-    ctx.font = 'italic 40px Times New Roman'
-    const controls = Object.keys(this.controlMap).sort((a, b) => {return this.controlMap[a].priority < this.controlMap[b].priority ? 1 : -1})
-    for (const control of controls) {
-      const keyName = this.controlMap[control].name
+    {
+      ctx.save()
+      ctx.translate(32, game.config.height)
+      ctx.font = 'italic 40px Times New Roman'
+      const controls = Object.keys(this.controlMap).sort((a, b) => {return this.controlMap[a].priority < this.controlMap[b].priority ? 1 : -1})
+      for (const control of controls) {
+        const keyName = this.controlMap[control].name
 
 
-      ctx.translate(0, -48)
+        ctx.translate(0, -48)
 
-      const str = keyName + ': ' + control
-      ctx.fillStyle = 'black'
-      ctx.fillText(str, 0, 0)
-      ctx.fillStyle = 'white'
-      ctx.fillText(str, 4, -4)
+        const str = keyName + ': ' + control
+        ctx.fillStyle = 'black'
+        ctx.fillText(str, 0, 0)
+        ctx.fillStyle = 'white'
+        ctx.fillText(str, 4, -4)
+      }
+      ctx.restore()
     }
-    ctx.restore()
+
+    {
+      const auxControls = [
+        "Arrow Keys: Camera",
+        "U: Undo",
+        "R: Restart",
+      ].reverse()
+      ctx.save()
+      ctx.translate(game.config.width - 400, game.config.height)
+      ctx.font = 'italic 40px Times New Roman'
+      for (const control of auxControls) {
+        ctx.translate(0, -48)
+        const str = control
+        ctx.fillStyle = 'black'
+        ctx.fillText(str, 0, 0)
+        ctx.fillStyle = 'white'
+        ctx.fillText(str, 4, -4)
+      }
+      ctx.restore()
+    }
 
     // Draw the score HUD
     {
