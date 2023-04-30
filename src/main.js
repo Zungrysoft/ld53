@@ -5,7 +5,7 @@ import Board from './board.js'
 game.config.width = 1920
 game.config.height = 1080
 //game.config.isWebglEnabled = false
-document.title = 'Sorting Warehouse'
+document.title = 'Sorting Center Savant'
 
 await game.loadAssets({
   images: {
