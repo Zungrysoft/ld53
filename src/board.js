@@ -25,6 +25,7 @@ export default class Board extends Thing {
   viewDistance = 4
   viewPosition = [0, 0, 0]
   time = 0
+  actionTime = 0
   colorMap = {
     'red': [0.5, 0.0, 0.0, 1],
     'green': [0.0, 0.6, 0.0, 1],
@@ -89,6 +90,7 @@ export default class Board extends Thing {
     super.update()
 
     this.time ++
+    this.actionTime --
 
     // Level controls
     if (this.time > 5) {
@@ -102,7 +104,7 @@ export default class Board extends Thing {
         }
       }
       if (game.keysPressed.BracketRight) {
-        if (game.globals.level < 13) {
+        if (game.globals.level < game.globals.levelCount) {
           game.globals.level ++
           game.resetScene()
         }
@@ -161,7 +163,7 @@ export default class Board extends Thing {
       if (this.advancementData.queue.length === 0) {
         for (const control in this.controlMap) {
           // If the user pressed a control key...
-          if (game.keysDown[this.controlMap[control].keyCode]) {
+          if (this.actionTime <= 0 && game.keysDown[this.controlMap[control].keyCode]) {
             // Create action queue
             this.advancementData = {
               control: control,
@@ -190,6 +192,9 @@ export default class Board extends Thing {
             if (this.stateStack[this.stateStack.length-1] !== curState) {
               this.stateStack.push(curState)
             }
+
+            // Limit the player to one action every n frames
+            // this.actionTime = 0
 
             // Done looking for controls
             break
@@ -228,6 +233,11 @@ export default class Board extends Thing {
 
     // Advance animations
     this.advanceAnimations()
+
+    // Check for win
+    if (this.state.cratesDelivered >= this.state.cratesRequired) {
+      game.globals.levelCompletions[this.state.level-1] = true
+    }
 
   }
 
@@ -316,6 +326,11 @@ export default class Board extends Thing {
 
         // If we've hit the ground, end the animation
         if (anim.position[2] <= anim.endPosition[2]) {
+          // Play a sound effect
+          if (Math.abs(anim.speed) > Math.abs(GRAVITY * 5) && anim.moveType !== 'deliver') {
+            soundmanager.playSound("thump")
+          }
+
           anim.moveType = 'none'
         }
       }
@@ -475,7 +490,7 @@ export default class Board extends Thing {
           const below = this.getElementAt(vec3.add(element.position, [0, 0, -1]))
           if (below !== -1) {
             // If on top of an active conveyor
-            if (this.state.elements[below].type === 'conveyor' && this.state.elements[below].color === color) {
+            if (this.state.elements[below].type === 'conveyor' && this.state.elements[below].color === color && !this.state.elements[below].destroyed) {
               // Set move direction
               const moveDir = this.state.elements[below].angle || 0
               states[i].moveDirection = moveDir
@@ -525,6 +540,9 @@ export default class Board extends Thing {
       }
     }
 
+    // Sound
+    let didMoveSomething = false
+
     // Advance state based on decisions
     for (let i = 0; i < this.state.elements.length; i ++) {
       if (states[i].decision === 'moving') {
@@ -535,12 +553,18 @@ export default class Board extends Thing {
 
         // Move the element's position
         this.state.elements[i].position = [...states[i].movePosition]
+
+        didMoveSomething = true
       }
 
       // Conveyor Belt Scroll Animation
       if (this.state.elements[i].type === 'conveyor' && this.state.elements[i].color === color) {
         this.animState[i].scrollTime = 14
       }
+    }
+
+    if (didMoveSomething) {
+      soundmanager.playSound("shift", 0.3)
     }
   }
 
@@ -581,11 +605,15 @@ export default class Board extends Thing {
     // Direction to move vector
     const dirs = [[0, 1, 0], [1, 0, 0], [0, -1, 0], [-1, 0, 0]]
 
+    // Sound
+    let didPushSomething = false
+    let didSpin = false
+
     // Iterate over fans...
     for (const i in this.state.elements) {
       const element = this.state.elements[i]
       // If this is a fan of the right color and angle...
-      if (element.type === 'fan' && element.angle === angle && element.color === color) {
+      if (element.type === 'fan' && element.angle === angle && element.color === color && !element.destroyed) {
         // Find elements in this fan's line
         let pos = [...element.position]
         while (vec2.magnitude(pos) < 50) {
@@ -594,14 +622,25 @@ export default class Board extends Thing {
 
           // If this is a moveable element, try to push it
           if (index !== -1) {
-            this.fanPushElement(pos, dirs[angle])
+            let result = this.fanPushElement(pos, dirs[angle])
+            if (result === true) {
+              didPushSomething = true
+            }
             break
           }
         }
 
         // Fan spinning animation
         this.animState[i].spinSpeed = 0.6
+        didSpin = true
       }
+    }
+
+    if (didPushSomething) {
+      soundmanager.playSound("wind", 0.3)
+    }
+    if (didSpin) {
+      soundmanager.playSound("whoosh", 0.3)
     }
   }
 
@@ -664,6 +703,8 @@ export default class Board extends Thing {
     }
 
     // Advance state based on decisions
+    let didCollect = false
+    let didFail = false
     for (let i = 0; i < this.state.elements.length; i ++) {
       if (states[i].decision === 'moving') {
         // Animation
@@ -684,6 +725,10 @@ export default class Board extends Thing {
           this.state.elements[i].position = [0, 0, this.state.floorHeight]
           if (this.state.elements[i].letter === states[i].fellInChute) {
             this.state.cratesDelivered ++
+            didCollect = true
+          }
+          else {
+            didFail = true
           }
 
           this.animState[i].moveType = 'deliver'
@@ -694,6 +739,13 @@ export default class Board extends Thing {
         }
       }
     }
+
+    if (didCollect) {
+      soundmanager.playSound("collect", 0.3)
+    }
+    if (didFail) {
+      soundmanager.playSound("fail", 0.3)
+    }
   }
 
   advanceLaser(color) {
@@ -703,14 +755,19 @@ export default class Board extends Thing {
     // Direction to move vector
     const dirs = [[0, 1, 0], [1, 0, 0], [0, -1, 0], [-1, 0, 0]]
 
+    // Sound effects
+    let didShootLaser = false
+    let didHitLaser = false
+
     // Iterate over elements...
     for (const i in this.state.elements) {
       const element = this.state.elements[i]
       // If this is a laser of the right color...
-      if (element.type === 'laser' && element.color === color) {
+      if (element.type === 'laser' && element.color === color && !element.destroyed) {
         // Laser animation
         this.animState[i].laserLength = 50
         this.animState[i].laserThickness = 0.04
+        didShootLaser = true
 
         // Find elements in this fan's line
         let pos = [...element.position]
@@ -725,10 +782,19 @@ export default class Board extends Thing {
             // Animation
             this.animState[i].laserLength = vec2.magnitude(vec3.subtract(pos, element.position))
 
+            didHitLaser = true
+
             break
           }
         }
       }
+    }
+
+    if (didShootLaser) {
+      soundmanager.playSound("laser", 0.2)
+    }
+    if (didHitLaser) {
+      soundmanager.playSound("laserHit", 0.8)
     }
 
     for (const i in this.state.elements) {
@@ -798,19 +864,6 @@ export default class Board extends Thing {
       ctx.restore()
     }
 
-    // Draw the level Name
-    {
-      ctx.save()
-      ctx.translate(game.config.width - 300, 112)
-      ctx.font = 'italic 80px Times New Roman'
-      const str = "Level " + this.state.level
-      ctx.fillStyle = 'black'
-      ctx.fillText(str, 0, 0)
-      ctx.fillStyle = 'white'
-      ctx.fillText(str, 4, -4)
-      ctx.restore()
-    }
-
     // Draw the victory text
     if (this.state.cratesDelivered >= this.state.cratesRequired) {
       // You win message
@@ -834,6 +887,34 @@ export default class Board extends Thing {
         ctx.font = 'italic 50px Times New Roman'
         ctx.textAlign = 'center'
         const str = "Use the square bracket keys to change levels"
+        ctx.fillStyle = 'black'
+        ctx.fillText(str, 0, 0)
+        ctx.fillStyle = 'white'
+        ctx.fillText(str, 4, -4)
+        ctx.restore()
+      }
+    } else {
+      // Draw the level Name
+      {
+        ctx.save()
+        ctx.translate(game.config.width/2, 112)
+        ctx.font = 'italic 80px Times New Roman'
+        ctx.textAlign = 'center'
+        const str = "Level " + this.state.level
+        ctx.fillStyle = 'black'
+        ctx.fillText(str, 0, 0)
+        ctx.fillStyle = 'white'
+        ctx.fillText(str, 4, -4)
+        ctx.restore()
+      }
+
+      // Draw completion text
+      if (game.globals.levelCompletions[this.state.level-1] === true) {
+        ctx.save()
+        ctx.translate(game.config.width/2, 180)
+        ctx.font = 'italic 40px Times New Roman'
+        ctx.textAlign = 'center'
+        const str = "Complete!"
         ctx.fillStyle = 'black'
         ctx.fillText(str, 0, 0)
         ctx.fillStyle = 'white'

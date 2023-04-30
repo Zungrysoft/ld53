@@ -9,6 +9,7 @@ import * as limitedResources from './levels/limitedResources.js'
 import * as plinko from './levels/plinko.js'
 import * as zapYourProblems from './levels/zapYourProblems.js'
 import * as fantastic from './levels/fantastic.js'
+import * as laserIntro from './levels/laserIntro.js'
 
 export function getLevel(lvl) {
   // Retrieve level data
@@ -19,6 +20,7 @@ export function getLevel(lvl) {
     fanPushesFan,
     sorting,
     shuffle,
+    laserIntro,
     fantastic,
     plinko,
     zapYourProblems,

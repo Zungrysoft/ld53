@@ -28,7 +28,16 @@ await game.loadAssets({
     uv_laser: 'images/uv_laser.png',
   },
 
-  sounds: {},
+  sounds: {
+    collect: 'sounds/collect.wav',
+    laserHit: 'sounds/laser.wav',
+    laser: 'sounds/laser2.wav',
+    shift: 'sounds/shift2.wav',
+    thump: 'sounds/thump.wav',
+    wind: 'sounds/wind.wav',
+    fail: 'sounds/fail.wav',
+    whoosh: 'sounds/whoosh.wav',
+  },
 
   shaderSources: {
     defaultFrag: 'shaders/default.frag',
@@ -78,7 +87,15 @@ assets.meshes = Object.fromEntries(
 
 // console.log(assets)
 
+game.globals.levelCount = 10
+game.globals.levelCompletions = []
+
+for (let i = 0; i < game.globals.levelCount; i++) {
+  game.globals.levelCompletions.push(false)
+}
 game.globals.level = 1
+
+
 game.setScene(() => {
   game.addThing(new Board())
 })
