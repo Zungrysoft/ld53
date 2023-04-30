@@ -171,6 +171,9 @@ export default class Board extends Thing {
                 'fall',
                 'fan3',
                 'fall',
+                'fall', // Hack for now
+                'fall',
+                'fall',
               ]
             }
 

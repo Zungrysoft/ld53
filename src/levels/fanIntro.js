@@ -102,7 +102,7 @@ export const data = {
         {
             type: 'fan',
             position: [-1, 4, 1],
-            color: 'blue',
+            color: 'green',
             angle: 1,
         },
 

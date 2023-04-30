@@ -180,13 +180,13 @@ export const data = {
         {
             type: 'fan',
             position: [0, 0, 1],
-            color: 'blue',
+            color: 'green',
             angle: 0,
         },
         {
             type: 'fan',
             position: [4, 3, 1],
-            color: 'green',
+            color: 'blue',
             angle: 1,
         },
 
