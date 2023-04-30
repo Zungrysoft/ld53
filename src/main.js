@@ -22,7 +22,7 @@ await game.loadAssets({
     uv_chute_c: 'images/uv_chute_c.png',
     uv_chute_d: 'images/uv_chute_d.png',
     uv_chute_e: 'images/uv_chute_e.png',
-    uv_chute: 'images/uv_chute.png',
+    uv_chute_: 'images/uv_chute.png',
     uv_conveyorBelt: 'images/uv_conveyor_belt.png',
     uv_block: 'images/uv_block.png',
     uv_laser: 'images/uv_laser.png',
@@ -30,8 +30,8 @@ await game.loadAssets({
 
   sounds: {
     collect: 'sounds/collect.wav',
-    laserHit: 'sounds/laser.wav',
     laser: 'sounds/laser2.wav',
+    laserHit: 'sounds/laser.wav',
     shift: 'sounds/shift2.wav',
     thump: 'sounds/thump.wav',
     wind: 'sounds/wind.wav',

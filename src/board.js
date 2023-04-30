@@ -42,10 +42,16 @@ export default class Board extends Thing {
     game.setThingName(this, 'board')
 
     // Build board state from level file
-    this.state = getLevel(game.globals.level)
+    if (game.globals.level === 0) {
+      this.state = JSON.parse(game.globals.customLevelState)
+    }
+    else {
+      this.state = getLevel(game.globals.level)
+    }
 
     // Consistency
     this.state.level = game.globals.level
+    this.state.cratesDelivered = 0
 
     // Set up camera based on level params
     this.setupCamera(this.state)
@@ -91,6 +97,7 @@ export default class Board extends Thing {
 
     this.time ++
     this.actionTime --
+    this.errorTime --
 
     // Level controls
     if (this.time > 5) {
@@ -108,6 +115,27 @@ export default class Board extends Thing {
           game.globals.level ++
           game.resetScene()
         }
+      }
+
+      // Load custom level
+      if (game.keysPressed.KeyL) {
+        navigator.clipboard.readText()
+        .then(text => {
+          try {
+            const stateData = JSON.parse(text)
+            game.globals.customLevelState = text
+            game.globals.level = 0
+            game.resetScene()
+          }
+          catch (error) {
+            this.errorMessage = "Failed to parse JSON"
+            this.errorTime = 300
+          }
+        })
+        .catch(err => {
+          this.errorMessage = "Failed to access clipboard"
+          this.errorTime = 300
+        });
       }
     }
 
@@ -235,7 +263,7 @@ export default class Board extends Thing {
     this.advanceAnimations()
 
     // Check for win
-    if (this.state.cratesDelivered >= this.state.cratesRequired) {
+    if (this.state.cratesDelivered >= this.state.cratesRequired && this.state.level > 0) {
       game.globals.levelCompletions[this.state.level-1] = true
     }
 
@@ -872,7 +900,7 @@ export default class Board extends Thing {
         ctx.translate(game.config.width/2, game.config.height/2 - 100)
         ctx.font = 'italic 130px Times New Roman'
         ctx.textAlign = 'center'
-        const str = "Level " + this.state.level + " Complete!"
+        const str = this.state.level === 0 ? "Level Complete!" : "Level " + this.state.level + " Complete!"
         ctx.fillStyle = 'black'
         ctx.fillText(str, 0, 0)
         ctx.fillStyle = 'white'
@@ -900,7 +928,7 @@ export default class Board extends Thing {
         ctx.translate(game.config.width/2, 112)
         ctx.font = 'italic 80px Times New Roman'
         ctx.textAlign = 'center'
-        const str = "Level " + this.state.level
+        const str = this.state.level === 0 ? "Custom Level" : "Level " + this.state.level
         ctx.fillStyle = 'black'
         ctx.fillText(str, 0, 0)
         ctx.fillStyle = 'white'
@@ -921,6 +949,20 @@ export default class Board extends Thing {
         ctx.fillText(str, 4, -4)
         ctx.restore()
       }
+    }
+
+    // Error text
+    if (this.errorTime > 0) {
+      ctx.save()
+      ctx.translate(game.config.width/2, game.config.height - 30)
+      ctx.font = 'italic 50px Times New Roman'
+      ctx.textAlign = 'center'
+      const str = "Error: " + this.errorMessage
+      ctx.fillStyle = u.colorToString(0.4, 0, 0, u.map(this.errorTime, 0, 60, 0, 1, true))
+      ctx.fillText(str, 0, 0)
+      ctx.fillStyle = u.colorToString(1, 1, 1, u.map(this.errorTime, 0, 60, 0, 1, true))
+      ctx.fillText(str, 4, -4)
+      ctx.restore()
     }
   }
 
