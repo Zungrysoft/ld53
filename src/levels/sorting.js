@@ -3,7 +3,7 @@ export const data = {
     cratesDelivered: 0,
     cameraDistance: 5,
     cameraPosition: [1, 0, 0],
-    cameraStartAngle: [Math.PI*(6/4), Math.PI*(1/8)],
+    cameraStartAngle: [Math.PI*(6/4), Math.PI*(2/8)],
     floorHeight: -5,
     elements: [
         // Main Conveyor
