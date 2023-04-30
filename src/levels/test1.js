@@ -61,8 +61,9 @@ export const data = {
             angle: 1,
         },
         {
-            type: 'block',
+            type: 'chute',
             position: [4, -1, -1],
+            letter: 'c',
         },
         {
             type: 'block',

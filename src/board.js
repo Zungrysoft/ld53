@@ -96,17 +96,17 @@ export default class Board extends Thing {
       if (game.keysPressed[this.controlMap[control].keyCode]) {
         // Conveyor
         this.advanceConveyor(control)
-        this.advanceFall(control)
+        this.advanceFall()
 
         // Fan
         this.advanceFan(control, 0)
-        this.advanceFall(control)
+        this.advanceFall()
         this.advanceFan(control, 1)
-        this.advanceFall(control)
+        this.advanceFall()
         this.advanceFan(control, 2)
-        this.advanceFall(control)
+        this.advanceFall()
         this.advanceFan(control, 3)
-        this.advanceFall(control)
+        this.advanceFall()
       }
     }
   }
@@ -340,11 +340,12 @@ export default class Board extends Thing {
     }
   }
 
-  advanceFall(color) {
+  advanceFall() {
     // Track which elements are blocked and which ones have moved
     const states = this.state.elements.map((e) => {return{
       decision: 'blocked',
       movePosition: e.position,
+      fellInChute: false,
     }})
 
     // Mark moveable elements as undecided
@@ -364,8 +365,15 @@ export default class Board extends Thing {
           // Check what this element is sitting on top of
           const below = this.getElementDownward(element.position)
           if (below !== -1) {
+            // If on top of a chute, destroy self
+            if (this.state.elements[below].type === 'chute') {
+              states[i].decision = 'moving'
+              states[i].movePosition = [...states[below].movePosition]
+              states[i].fellInChute = this.state.elements[below].letter
+            }
+
             // If on top of a decided element, move down to it
-            if (states[below].decision === 'blocked' || states[below].decision === 'moving') {
+            else if (states[below].decision === 'blocked' || states[below].decision === 'moving') {
               states[i].decision = 'moving'
               states[i].movePosition = vec3.add(states[below].movePosition, [0, 0, 1])
               continue
@@ -390,7 +398,18 @@ export default class Board extends Thing {
     // Advance state based on decisions
     for (let i = 0; i < this.state.elements.length; i ++) {
       if (states[i].decision === 'moving') {
-        this.state.elements[i].position = states[i].movePosition
+        // If it fell in a chute, special rules apply
+        if (states[i].fellInChute) {
+          this.state.elements[i].destroyed = true
+          this.state.elements[i].position = [0, 0, -1000]
+          if (this.state.elements[i].letter === states[i].fellInChute) {
+            this.state.cratesDelivered ++
+          }
+        }
+        // Otherwise, just move it where it's headed
+        else {
+          this.state.elements[i].position = states[i].movePosition
+        }
       }
     }
   }
@@ -433,6 +452,17 @@ export default class Board extends Thing {
       ctx.fillStyle = 'white'
       ctx.fillText(str, 4, -4)
     }
+    ctx.restore()
+
+    // Draw the score HUD
+    ctx.save()
+    ctx.translate(32, 72)
+    ctx.font = 'italic 40px Times New Roman'
+    const str = this.state.cratesDelivered + "/" + this.state.cratesRequired + " crates correctly sorted"
+    ctx.fillStyle = 'black'
+    ctx.fillText(str, 0, 0)
+    ctx.fillStyle = 'white'
+    ctx.fillText(str, 4, -4)
     ctx.restore()
   }
 
