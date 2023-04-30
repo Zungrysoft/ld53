@@ -5,10 +5,12 @@ import * as stacking from './levels/stacking.js'
 import * as intro from './levels/intro.js'
 import * as shuffle from './levels/shuffle.js'
 import * as sorting from './levels/sorting.js'
+import * as laserTest from './levels/laserTest.js'
 
 export function getLevel(lvl) {
   // Retrieve level data
   const levelList = [
+    laserTest,
     intro,
     fanIntro,
     stacking,

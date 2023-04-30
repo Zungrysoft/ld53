@@ -148,7 +148,7 @@ export default class Board extends Thing {
     // =============
 
     // Determine if blocked
-    const blocked = this.isAnimationBlocking()
+    let blocked = this.isAnimationBlocking()
 
     // If not blocked...
     if (!blocked) {
@@ -171,7 +171,10 @@ export default class Board extends Thing {
                 'fall',
                 'fan3',
                 'fall',
+                'laser',
+                'fall',
                 'fall', // Hack for now
+                'fall',
                 'fall',
                 'fall',
               ]
@@ -188,8 +191,9 @@ export default class Board extends Thing {
           }
         }
       }
+
       // If there are elements in advancement queue, execute them
-      else {
+      while (!blocked && this.advancementData.queue.length > 0) {
         const adv = this.advancementData.queue.shift()
         if (adv === 'conveyor') {
           this.advanceConveyor(this.advancementData.control)
@@ -209,6 +213,11 @@ export default class Board extends Thing {
         else if (adv === 'fan3') {
           this.advanceFan(this.advancementData.control, 3)
         }
+        else if (adv === 'laser') {
+          this.advanceLaser(this.advancementData.control)
+        }
+
+        blocked = this.isAnimationBlocking()
       }
     }
 
@@ -235,6 +244,8 @@ export default class Board extends Thing {
       scale: 1.0,
       scrollTime: 0,
       scrollPosition: 0,
+      laserThickness: 0,
+      laserLength: 0,
     }})
   }
 
@@ -245,6 +256,8 @@ export default class Board extends Thing {
     const MOVE_FRICTION_FRICTION = 0.005
     const MOVE_FRICTION_THRESHOLD = 0.02
     const SPIN_FRICTION = 0.04
+    const MOVE_SHRINK_RATE = 0.1
+    const LASER_SHRINK_RATE = 0.004
 
     for (let i = 0; i < this.animState.length; i ++) {
       const anim = this.animState[i]
@@ -306,6 +319,16 @@ export default class Board extends Thing {
         anim.scale = u.map(dist, 0, 1.0, 0, 1.0, true)
       }
 
+      // Shrinking from a laser
+      if (anim.moveType === 'shrink') {
+        // If we've hit zero, end the animation
+        anim.scale -= MOVE_SHRINK_RATE
+
+        if (anim.scale <= 0) {
+          anim.moveType = 'none'
+        }
+      }
+
       // Fan spinning
       if (anim.spinSpeed > 0) {
         anim.spinSpeed *= 1.0-SPIN_FRICTION
@@ -316,6 +339,11 @@ export default class Board extends Thing {
       if (anim.scrollTime > 0) {
         anim.scrollTime -= 1
         anim.scrollPosition += MOVE_LINEAR_SPEED / 2
+      }
+
+      // Laser beam
+      if (anim.laserThickness > 0) {
+        anim.laserThickness -= Math.max(0, LASER_SHRINK_RATE)
       }
     }
   }
@@ -330,11 +358,11 @@ export default class Board extends Thing {
   }
 
   moveable(type) {
-    return type === 'crate' || type === 'fan'
+    return type === 'crate' || type === 'fan' || type === 'laser'
   }
 
   pushable(type) {
-    return type === 'crate' || type === 'fan'
+    return type === 'crate' || type === 'fan' || type === 'laser'
   }
 
   getElementAt(pos) {
@@ -660,6 +688,55 @@ export default class Board extends Thing {
     }
   }
 
+  advanceLaser(color) {
+    // Track which elements are destroyed
+    const destroyed = this.state.elements.map(_ => false)
+
+    // Direction to move vector
+    const dirs = [[0, 1, 0], [1, 0, 0], [0, -1, 0], [-1, 0, 0]]
+
+    // Iterate over elements...
+    for (const i in this.state.elements) {
+      const element = this.state.elements[i]
+      // If this is a laser of the right color...
+      if (element.type === 'laser' && element.color === color) {
+        // Laser animation
+        this.animState[i].laserLength = 50
+        this.animState[i].laserThickness = 0.04
+
+        // Find elements in this fan's line
+        let pos = [...element.position]
+        while (vec2.magnitude(pos) < 50) {
+          pos = vec3.add(pos, dirs[element.angle])
+          const index = this.getElementAt(pos)
+
+          // If this is a moveable element, mark it for destruction
+          if (index !== -1) {
+            destroyed[index] = true
+
+            // Animation
+            this.animState[i].laserLength = vec2.magnitude(vec3.subtract(pos, element.position))
+
+            break
+          }
+        }
+      }
+    }
+
+    for (const i in this.state.elements) {
+      if (destroyed[i]) {
+        // Animation
+        this.animState[i].moveType = 'shrink'
+        this.animState[i].scale = 1.0
+        this.animState[i].position = [...this.state.elements[i].position]
+
+        // State update
+        this.state.elements[i].destroyed = true
+        this.state.elements[i].position = [0, 0, this.state.floorHeight]
+      }
+    }
+  }
+
   postDraw () {
     const { ctx } = game
 
@@ -761,7 +838,7 @@ export default class Board extends Thing {
   // Draws one game element
   drawElement (elementState, animState) {
     // Don't render if destroyed
-    if (elementState.destroyed && animState.moveType !== 'deliver') {
+    if (elementState.destroyed && animState.moveType !== 'deliver' && animState.moveType !== 'shrink') {
       return
     }
 
@@ -837,10 +914,28 @@ export default class Board extends Thing {
       gfx.setTexture(assets.textures.uv_conveyorBelt)
       gfx.set('modelMatrix', mat.getTransformation({
         translation: rPos,
-        rotation: [Math.PI/2, 0, (-elementState.angle || 0) * (Math.PI/2)],
+        rotation: [Math.PI/2, 0, -(elementState.angle || 0) * (Math.PI/2)],
         scale: rScale
       }))
       gfx.drawMesh(assets.meshes.conveyorBelt)
+    }
+
+    // If this is a laser, render the beam as well
+    if (elementState.type === 'laser') {
+      let offset = vec2.rotate(0, animState.laserLength/2, -(elementState.angle || 0) * (Math.PI/2))
+      offset.push(0)
+
+      gfx.setShader(rShader)
+      game.getCamera3D().setUniforms()
+      gfx.set('color', rColor)
+      gfx.set('scroll', 0)
+      gfx.setTexture(assets.textures.square)
+      gfx.set('modelMatrix', mat.getTransformation({
+        translation: vec3.add(rPos, offset),
+        rotation: [Math.PI/2, 0, (-(elementState.angle || 0) + 1) * (Math.PI/2)],
+        scale: [animState.laserLength, animState.laserThickness, animState.laserThickness]
+      }))
+      gfx.drawMesh(assets.meshes.cube)
     }
   }
 }

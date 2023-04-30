@@ -46,6 +46,7 @@ await game.loadAssets({
     fanBlade: 'models/fan_blade.obj',
     conveyor: 'models/conveyor.obj',
     conveyorBelt: 'models/conveyor_belt.obj',
+    laser: 'models/laser.obj',
   }
 })
 
