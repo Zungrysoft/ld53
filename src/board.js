@@ -127,7 +127,16 @@ export default class Board extends Thing {
     if (game.keysPressed.KeyU || game.keysPressed.Space) {
       // Make sure there are actually things to undo
       if (this.stateStack.length > 0) {
-        this.state = JSON.parse(this.stateStack.pop())
+        let newState = this.stateStack.pop()
+        let oldState = JSON.stringify(this.state)
+
+        // If the new state matches the old state, that means one duplicate state got pushed
+        // So go to the next state
+        if (newState === oldState && this.stateStack.length > 0) {
+          newState = this.stateStack.pop()
+        }
+        this.state = JSON.parse(newState)
+
         this.resetAnimations()
       }
     }
