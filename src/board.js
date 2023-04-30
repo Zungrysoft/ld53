@@ -29,9 +29,10 @@ export default class Board extends Thing {
     'red': [0.5, 0.0, 0.0, 1],
     'green': [0.0, 0.6, 0.0, 1],
     'blue': [0.0, 0.0, 0.4, 1],
-    'cyan': [0.0, 0.8, 0.8, 1],
     'yellow': [0.9, 0.9, 0.0, 1],
-    'black': [0.0, 0.0, 0.0, 1],
+    'cyan': [0.0, 0.5, 0.5, 1],
+    'purple': [0.5, 0.0, 0.8, 1],
+    'grey': [0.3, 0.3, 0.3, 1],
   }
   controlMap = {}
 
@@ -63,21 +64,25 @@ export default class Board extends Thing {
   }
 
   setupControls() {
-    let controlOrder = [
-      {keyCode: "KeyZ", name: "Z"},
-      {keyCode: "KeyX", name: "X"},
-      {keyCode: "KeyC", name: "C"},
-      {keyCode: "KeyV", name: "V"},
-      {keyCode: "KeyT", name: "B"},
-      {keyCode: "KeyN", name: "N"},
-      {keyCode: "KeyM", name: "M"},
-    ]
+    const fullControlMap = {
+      red: {keyCode: "KeyZ", name: "Z", priority: 0},
+      green: {keyCode: "KeyX", name: "X", priority: 1},
+      blue: {keyCode: "KeyC", name: "C", priority: 2},
+      yellow: {keyCode: "KeyV", name: "V", priority: 3},
+      cyan: {keyCode: "KeyB", name: "B", priority: 4},
+      purple: {keyCode: "KeyN", name: "N", priority: 5},
+      grey: {keyCode: "KeyM", name: "M", priority: 6},
+    }
+    this.controlMap = []
+
     for (const element of this.state.elements) {
       const c = element.color
       if (c && !(c in this.controlMap)) {
-        this.controlMap[c] = controlOrder.shift()
+        this.controlMap[c] = fullControlMap[c]
       }
     }
+
+
   }
 
   update () {
@@ -765,7 +770,7 @@ export default class Board extends Thing {
     ctx.save()
     ctx.translate(32, game.config.height)
     ctx.font = 'italic 40px Times New Roman'
-    const controls = Object.keys(this.controlMap).reverse()
+    const controls = Object.keys(this.controlMap).sort((a, b) => {return this.controlMap[a].priority < this.controlMap[b].priority ? 1 : -1})
     for (const control of controls) {
       const keyName = this.controlMap[control].name
 
@@ -928,7 +933,7 @@ export default class Board extends Thing {
       let offset = vec2.rotate(0, animState.laserLength/2, -(elementState.angle || 0) * (Math.PI/2))
       offset.push(0)
 
-      gfx.setShader(rShader)
+      gfx.setShader(assets.shaders.default)
       game.getCamera3D().setUniforms()
       gfx.set('color', rColor)
       gfx.set('scroll', 0)

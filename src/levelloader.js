@@ -12,6 +12,7 @@ import * as zapYourProblems from './levels/zapYourProblems.js'
 export function getLevel(lvl) {
   // Retrieve level data
   const levelList = [
+    limitedResources,
     intro,
     fanIntro,
     stacking,
@@ -20,7 +21,6 @@ export function getLevel(lvl) {
     shuffle,
     plinko,
     zapYourProblems,
-    limitedResources,
     level1,
     level1,
     level1,
