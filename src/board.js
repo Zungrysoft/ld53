@@ -118,23 +118,29 @@ export default class Board extends Thing {
 
       // Load custom level
       if (game.keysPressed.KeyL) {
-        navigator.clipboard.readText()
-        .then(text => {
-          try {
-            const stateData = JSON.parse(text)
-            game.globals.customLevelState = text
-            game.globals.level = 0
-            game.resetScene()
-          }
-          catch (error) {
-            this.errorMessage = "Failed to parse JSON"
+        try {
+          navigator.clipboard.readText()
+          .then(text => {
+            try {
+              const stateData = JSON.parse(text)
+              game.globals.customLevelState = text
+              game.globals.level = 0
+              game.resetScene()
+            }
+            catch (error) {
+              this.errorMessage = "Failed to parse JSON"
+              this.errorTime = 300
+            }
+          })
+          .catch(err => {
+            this.errorMessage = "Failed to access clipboard"
             this.errorTime = 300
-          }
-        })
-        .catch(err => {
-          this.errorMessage = "Failed to access clipboard"
+          });
+        }
+        catch (error) {
+          this.errorMessage = "Clipboard is disabled in this browser"
           this.errorTime = 300
-        });
+        }
       }
     }
 
