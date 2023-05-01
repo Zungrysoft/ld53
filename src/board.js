@@ -921,7 +921,8 @@ export default class Board extends Thing {
     }
 
     // Draw the victory text
-    if (this.state.cratesDelivered >= this.state.cratesRequired) {
+    const victory = this.state.cratesDelivered >= this.state.cratesRequired
+    if (victory) {
       // You win message
       {
         ctx.save()
@@ -949,7 +950,8 @@ export default class Board extends Thing {
         ctx.fillText(str, 4, -4)
         ctx.restore()
       }
-    } else {
+    }
+    if (!victory || this.state.level === 0) {
       // Draw the level Name
       {
         ctx.save()
