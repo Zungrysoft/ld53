@@ -956,7 +956,7 @@ export default class Board extends Thing {
         ctx.translate(game.config.width/2, 112)
         ctx.font = 'italic 80px Times New Roman'
         ctx.textAlign = 'center'
-        const str = this.state.level === 0 ? "Custom Level" : "Level " + this.state.level
+        const str = this.state.level === 0 ? this.state.levelTitle : "Level " + this.state.level
         ctx.fillStyle = 'black'
         ctx.fillText(str, 0, 0)
         ctx.fillStyle = 'white'

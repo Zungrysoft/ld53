@@ -1,4 +1,5 @@
 {
+    "levelTitle": "Demo Custom Level",
     "cratesRequired": 2,
     "cameraPosition": [1, 1, 0],
     "cameraDistance": 5,
