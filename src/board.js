@@ -71,13 +71,13 @@ export default class Board extends Thing {
 
   setupControls() {
     const fullControlMap = {
-      red: {keyCode: "KeyZ", name: "Z", priority: 0},
-      green: {keyCode: "KeyX", name: "X", priority: 1},
-      blue: {keyCode: "KeyC", name: "C", priority: 2},
-      yellow: {keyCode: "KeyV", name: "V", priority: 3},
-      cyan: {keyCode: "KeyB", name: "B", priority: 4},
-      purple: {keyCode: "KeyN", name: "N", priority: 5},
-      grey: {keyCode: "KeyM", name: "M", priority: 6},
+      red: {keyCode: "KeyR", name: "R", priority: 0},
+      green: {keyCode: "KeyG", name: "G", priority: 1},
+      blue: {keyCode: "KeyB", name: "B", priority: 2},
+      yellow: {keyCode: "KeyY", name: "Y", priority: 3},
+      cyan: {keyCode: "KeyC", name: "C", priority: 4},
+      purple: {keyCode: "KeyP", name: "P", priority: 5},
+      grey: {keyCode: "KeyG", name: "G", priority: 6},
     }
     this.controlMap = []
 
@@ -100,16 +100,16 @@ export default class Board extends Thing {
 
     // Level controls
     if (this.time > 5) {
-      if (game.keysPressed.KeyR) {
+      if (game.keysPressed.Backspace) {
         game.resetScene()
       }
-      if (game.keysPressed.BracketLeft) {
+      if (game.keysPressed.BracketLeft || game.keysPressed.Minus || game.keysPressed.NumpadSubtract) {
         if (game.globals.level > 1) {
           game.globals.level --
           game.resetScene()
         }
       }
-      if (game.keysPressed.BracketRight) {
+      if (game.keysPressed.BracketRight || game.keysPressed.Equal || game.keysPressed.NumpadAdd) {
         if (game.globals.level < game.globals.levelCount) {
           game.globals.level ++
           game.resetScene()
@@ -162,7 +162,7 @@ export default class Board extends Thing {
     this.updateCamera()
 
     // Undo function
-    if (game.keysPressed.KeyU || game.keysPressed.Space || game.keysPressed.Backspace) {
+    if (game.keysPressed.KeyU || game.keysPressed.Space) {
       // Make sure there are actually things to undo
       if (this.stateStack.length > 0) {
         let newState = this.stateStack.pop()
@@ -889,8 +889,8 @@ export default class Board extends Thing {
     {
       const auxControls = [
         "Arrow Keys: Camera",
-        "U: Undo",
-        "R: Restart",
+        "Space / U: Undo",
+        "Backspace: Restart",
       ].reverse()
       ctx.save()
       ctx.translate(game.config.width - 48, game.config.height)
@@ -943,7 +943,7 @@ export default class Board extends Thing {
         ctx.translate(game.config.width/2, game.config.height/2 + 100)
         ctx.font = 'italic 50px Times New Roman'
         ctx.textAlign = 'center'
-        const str = "Use the square bracket keys to change levels"
+        const str = "Use - and + to change levels"
         ctx.fillStyle = 'black'
         ctx.fillText(str, 0, 0)
         ctx.fillStyle = 'white'
