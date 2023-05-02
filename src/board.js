@@ -32,6 +32,7 @@ export default class Board extends Thing {
     'yellow': [0.9, 0.9, 0.0, 1],
     'cyan': [0.0, 0.5, 0.5, 1],
     'purple': [0.5, 0.0, 0.8, 1],
+    'orange': [1.0, 0.5, 0.0, 1],
     'grey': [0.3, 0.3, 0.3, 1],
   }
   controlMap = {}
@@ -71,13 +72,14 @@ export default class Board extends Thing {
 
   setupControls() {
     const fullControlMap = {
-      red: {keyCode: "KeyR", name: "R", priority: 0},
-      green: {keyCode: "KeyG", name: "G", priority: 1},
-      blue: {keyCode: "KeyB", name: "B", priority: 2},
-      yellow: {keyCode: "KeyY", name: "Y", priority: 3},
-      cyan: {keyCode: "KeyC", name: "C", priority: 4},
-      purple: {keyCode: "KeyP", name: "P", priority: 5},
-      grey: {keyCode: "KeyG", name: "G", priority: 6},
+      red: {keyCode: "KeyR", name: "R", buttonId: 1, buttonName: "B", priority: 0},
+      green: {keyCode: "KeyG", name: "G", buttonId: 0, buttonName: "A", priority: 1},
+      blue: {keyCode: "KeyB", name: "B", buttonId: 2, buttonName: "X", priority: 2},
+      yellow: {keyCode: "KeyY", name: "Y", buttonId: 3, buttonName: "Y", priority: 3},
+      cyan: {keyCode: "KeyC", name: "C", buttonId: 9, buttonName: "Select", priority: 4},
+      purple: {keyCode: "KeyP", name: "P", buttonId: 8, buttonName: "Start", priority: 5},
+      orange: {keyCode: "KeyO", name: "O", buttonId: 11, buttonName: "RS", priority: 6},
+      grey: {keyCode: "KeyG", name: "G", buttonId: 10, buttonName: "LS", priority: 7},
     }
     this.controlMap = []
 
@@ -98,18 +100,26 @@ export default class Board extends Thing {
     this.actionTime --
     this.errorTime --
 
+    // Decide whether to show keyboard controls or gamepad controls based on which was used most recently
+    if (Object.keys(game.buttonsPressed).length) {
+      game.globals.usingGamepad = true
+    }
+    if (Object.keys(game.keysPressed).length) {
+      game.globals.usingGamepad = false
+    }
+
     // Level controls
     if (this.time > 5) {
-      if (game.keysPressed.Backspace) {
+      if (game.keysPressed.Backspace || game.buttonsPressed[4]) {
         game.resetScene()
       }
-      if (game.keysPressed.BracketLeft || game.keysPressed.Minus || game.keysPressed.NumpadSubtract) {
+      if (game.keysPressed.BracketLeft || game.keysPressed.Minus || game.keysPressed.NumpadSubtract || game.buttonsPressed[6]) {
         if (game.globals.level > 1) {
           game.globals.level --
           game.resetScene()
         }
       }
-      if (game.keysPressed.BracketRight || game.keysPressed.Equal || game.keysPressed.NumpadAdd) {
+      if (game.keysPressed.BracketRight || game.keysPressed.Equal || game.keysPressed.NumpadAdd || game.buttonsPressed[7]) {
         if (game.globals.level < game.globals.levelCount) {
           game.globals.level ++
           game.resetScene()
@@ -145,16 +155,16 @@ export default class Board extends Thing {
     }
 
     // Camera controls
-    if (game.keysPressed.ArrowRight) {
+    if (game.keysPressed.ArrowRight || game.buttonsPressed[15]) {
       this.viewAngleTarget[0] -= Math.PI/4
     }
-    if (game.keysPressed.ArrowLeft) {
+    if (game.keysPressed.ArrowLeft || game.buttonsPressed[14]) {
       this.viewAngleTarget[0] += Math.PI/4
     }
-    if (game.keysPressed.ArrowUp) {
+    if (game.keysPressed.ArrowUp || game.buttonsPressed[12]) {
       this.viewAngleTarget[1] += Math.PI/8
     }
-    if (game.keysPressed.ArrowDown) {
+    if (game.keysPressed.ArrowDown || game.buttonsPressed[13]) {
       this.viewAngleTarget[1] -= Math.PI/8
     }
     this.viewAngleTarget[1] = u.clamp(this.viewAngleTarget[1], 0, Math.PI/2)
@@ -162,7 +172,7 @@ export default class Board extends Thing {
     this.updateCamera()
 
     // Undo function
-    if (game.keysPressed.KeyU || game.keysPressed.Space) {
+    if (game.keysPressed.KeyU || game.keysPressed.Space || game.buttonsPressed[5]) {
       // Make sure there are actually things to undo
       if (this.stateStack.length > 0) {
         let newState = this.stateStack.pop()
@@ -196,7 +206,7 @@ export default class Board extends Thing {
       if (this.advancementData.queue.length === 0) {
         for (const control in this.controlMap) {
           // If the user pressed a control key...
-          if (this.actionTime <= 0 && game.keysDown[this.controlMap[control].keyCode]) {
+          if (this.actionTime <= 0 && (game.keysDown[this.controlMap[control].keyCode] || game.buttonsDown[this.controlMap[control].buttonId])) {
             // Create action queue
             this.advancementData = {
               control: control,
@@ -871,13 +881,13 @@ export default class Board extends Thing {
       ctx.translate(32, game.config.height)
       ctx.font = 'italic 40px Times New Roman'
       const controls = Object.keys(this.controlMap).sort((a, b) => {return this.controlMap[a].priority < this.controlMap[b].priority ? 1 : -1})
-      for (const control of controls) {
-        const keyName = this.controlMap[control].name
-
+      for (const key of controls) {
+        const control = this.controlMap[key]
+        const keyName = game.globals.usingGamepad ? control.buttonName : control.name
 
         ctx.translate(0, -48)
 
-        const str = keyName + ': ' + control
+        const str = keyName + ': ' + key
         ctx.fillStyle = 'black'
         ctx.fillText(str, 0, 0)
         ctx.fillStyle = 'white'
@@ -892,11 +902,16 @@ export default class Board extends Thing {
         "Space / U: Undo",
         "Backspace: Restart",
       ].reverse()
+      const auxControlsGamepad = [
+        "DPad: Camera",
+        "RB: Undo",
+        "LB: Restart",
+      ].reverse()
       ctx.save()
       ctx.translate(game.config.width - 48, game.config.height)
       ctx.font = 'italic 40px Times New Roman'
       ctx.textAlign = 'right'
-      for (const control of auxControls) {
+      for (const control of (game.globals.usingGamepad ? auxControlsGamepad : auxControls)) {
         ctx.translate(0, -48)
         const str = control
         ctx.fillStyle = 'black'
@@ -941,9 +956,9 @@ export default class Board extends Thing {
       if (this.state.level !== 0) {
         ctx.save()
         ctx.translate(game.config.width/2, game.config.height/2 + 100)
-        ctx.font = 'italic 50px Times New Roman'
+        ctx.font = 'italic bold 50px Times New Roman'
         ctx.textAlign = 'center'
-        const str = "Use - and + to change levels"
+        const str = game.globals.usingGamepad ? "Use LT and RT to change levels" : "Use - and + to change levels"
         ctx.fillStyle = 'black'
         ctx.fillText(str, 0, 0)
         ctx.fillStyle = 'white'

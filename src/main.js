@@ -89,6 +89,7 @@ assets.meshes = Object.fromEntries(
 
 game.globals.levelCount = 12
 game.globals.levelCompletions = []
+game.globals.usingGamepad = false
 
 for (let i = 0; i < game.globals.levelCount; i++) {
   game.globals.levelCompletions.push(false)

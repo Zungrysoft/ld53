@@ -20,6 +20,9 @@ export const gamepads = []
 export const keysDown = {}
 export const lastKeysDown = {}
 export const keysPressed = {}
+export const buttonsDown = {}
+export const lastButtonsDown = {}
+export const buttonsPressed = {}
 export const mouse = {
   position: [0, 0],
   delta: [0, 0],
@@ -153,11 +156,31 @@ function update () {
     if (!lastKeysDown[key]) keysPressed[key] = true
   }
 
+  // Update buttons down
+  for (const button in buttonsDown) delete buttonsDown[button]
   if (navigator?.getGamepads) {
     for (const [i, gamepad] of Object.entries(navigator.getGamepads())) {
       gamepads[i] = gamepad
+
+      if (gamepad?.buttons) {
+        for (const [i, button] of Object.entries(gamepad.buttons)) {
+          if (button.pressed) {
+            buttonsDown[i] = true
+          }
+        }
+      }
     }
   }
+
+  // update buttons pressed
+  for (const button in buttonsPressed) delete buttonsPressed[button]
+  for (const button in buttonsDown) {
+    if (!lastButtonsDown[button]) buttonsPressed[button] = true
+  }
+
+  // update last buttons down
+  for (const button in lastButtonsDown) delete lastButtonsDown[button]
+  for (const button in buttonsDown) lastButtonsDown[button] = true
 
   if (scene) {
     scene.clearScreen()
