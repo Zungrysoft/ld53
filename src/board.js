@@ -104,7 +104,7 @@ export default class Board extends Thing {
     if (Object.keys(game.buttonsPressed).length) {
       game.globals.usingGamepad = true
     }
-    if (Object.keys(game.keysPressed).length) {
+    if (Object.keys(game.keysPressed).length && !game.keysPressed.KeyL) {
       game.globals.usingGamepad = false
     }
 
