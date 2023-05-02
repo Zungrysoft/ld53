@@ -524,7 +524,11 @@ export default class Board extends Thing {
     const dirs = [[0, 1, 0], [1, 0, 0], [0, -1, 0], [-1, 0, 0]]
 
     // Iterate until all elements have decided how to move
-    while (states.filter(e => e.decision === 'undecided').length > 0) {
+    let maxIter = 50
+    while (states.filter(e => e.decision === 'undecided').length > 0 && maxIter > 0) {
+      // Limit the number of iterations so that if we have a cyclical state, it won't cause an infinite loop
+      maxIter --
+
       // Loop over undecided elements
       for (const i in this.state.elements) {
         const element = this.state.elements[i]
@@ -704,7 +708,11 @@ export default class Board extends Thing {
     }
 
     // Iterate until all elements have decided how to move
-    while (states.filter(e => e.decision === 'undecided').length > 0) {
+    let maxIter = 50
+    while (states.filter(e => e.decision === 'undecided').length > 0 && maxIter > 0) {
+      // Limit the number of iterations so that if we have a cyclical state, it won't cause an infinite loop
+      maxIter --
+
       // Loop over undecided elements
       for (const i in this.state.elements) {
         const element = this.state.elements[i]
