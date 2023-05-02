@@ -33,7 +33,7 @@ export default class Board extends Thing {
     'cyan': [0.0, 0.5, 0.5, 1],
     'purple': [0.5, 0.0, 0.8, 1],
     'orange': [1.0, 0.5, 0.0, 1],
-    'grey': [0.3, 0.3, 0.3, 1],
+    'white': [1.0, 1.0, 1.0, 1],
   }
   controlMap = {}
 
@@ -79,7 +79,7 @@ export default class Board extends Thing {
       cyan: {keyCode: "KeyC", name: "C", buttonId: 9, buttonName: "Select", priority: 4},
       purple: {keyCode: "KeyP", name: "P", buttonId: 8, buttonName: "Start", priority: 5},
       orange: {keyCode: "KeyO", name: "O", buttonId: 11, buttonName: "RS", priority: 6},
-      grey: {keyCode: "KeyG", name: "G", buttonId: 10, buttonName: "LS", priority: 7},
+      white: {keyCode: "KeyW", name: "W", buttonId: 10, buttonName: "LS", priority: 7},
     }
     this.controlMap = []
 

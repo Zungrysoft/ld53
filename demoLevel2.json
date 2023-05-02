@@ -85,7 +85,7 @@
             "type": "fan",
             "position": [7, 0, 1],
             "angle": 0,
-            "color": "grey"
+            "color": "white"
         },
 
         {
